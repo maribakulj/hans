@@ -551,3 +551,46 @@ Rapport complet : `docs/H1.md`.
 **La boucle s'arrête** — condition d'arrêt « H1 est tranchée », prévue au
 contrat. `G3` et `G4` sont clos sans être faits, comme le contrat le prévoit
 aussi en cas de réfutation.
+
+### 2026-09-21 (suite 5) — le code qui portait le verdict n'avait pas de tests
+
+`hans/resolvers/ctc.py` et `hans/campaign.py` : **zéro test**. `hans/cuts.py` :
+effleuré par un seul. Or `transfer` et `support` sont exactement ce sur quoi
+repose la conclusion publiée dans `docs/H1.md`. Même défaut que l'item 0 de
+saknussemm, et plus grave ici puisqu'une conclusion en dépend. 45 → **78
+tests**.
+
+Ce qui est désormais épinglé :
+
+- le contrat de `transfer` — une boîte par token, monotone, dans la boîte de
+  ligne, largeur ≥ 1 — y compris sur une lecture qui ne partage **rien** avec
+  la cible, cas où une géométrie inadmissible serait rejetée en bloc par la
+  couture ;
+- **huit cas prouvant que toute réponse passe `_geometry_is_usable`** de
+  saknussemm (saute sans saknussemm, comme la parité) ;
+- le repli sur support faible, et le fait qu'une ligne absente du cache
+  **lève** au lieu de se replier en silence ;
+- le support d'une ligne Fraktur, **entre 0,5 et 0,7** : le chiffre qui
+  explique pourquoi le seuil n'a pas sauvé les deux frontières qui ont
+  réfuté H1.
+
+**Et un test a trouvé une régression que j'avais introduite.** Le garde
+d'échelle, deuxième version : en élargissant la tolérance à 0,30 pour tuer un
+faux positif, j'avais tué le vrai positif avec. Il ne refusait plus les
+dixièmes de millimètre — la trappe pour laquelle il avait été écrit.
+
+Le fond est plus profond que le réglage. Sans `WIDTH` de page déclaré,
+l'étendue des lignes donne **1,181 pour `37-GT-BNL`** (vraie échelle 1,181)
+et **1,247 pour Gallica** (vraie échelle 1,0). L'heuristique ne peut pas les
+distinguer. Le garde ne devine donc plus : quand la page ne déclare pas sa
+largeur, il **exige `--scale`** et refuse sinon. Vérifié sur les deux corpus
+réels.
+
+`LICENSE` réparé (le `curl` initial avait échoué en silence).
+
+Campagne relancée : verdict identique, **H1 réfutée**. Reproductible.
+
+**La file est vide de tout ce qui ne demande pas d'arbitrage.** Ne restent
+que l'épingle de budget de `rewrite_alto_file`, H2 (type **C**), et la PR de
+la branche saknussemm. La boucle s'arrête sur « l'item suivant exige une
+décision humaine ».

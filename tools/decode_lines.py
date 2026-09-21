@@ -48,47 +48,66 @@ def _page_width(alto: Path) -> int | None:
 
 
 def _check_scale(
-    lines: list, img_width: int, scale: float, page_width: int | None
+    lines: list,
+    img_width: int,
+    scale: float,
+    page_width: int | None,
+    scale_was_given: bool = True,
 ) -> None:
-    """Refuse to decode when the declared scale contradicts the image.
+    """Refuse to decode when the scale cannot be trusted.
 
-    The 37-GT-BNL ALTO are in tenths of a millimetre at 300 dpi, so their
-    coordinates are 254/300 of the pixels. Decoding them at scale 1 does not
-    fail: it crops 18% short, further off with every line down the page, and
-    returns text — plausible, never empty. That trap has already cost
-    saknussemm two full campaigns, twice, which is why this refuses instead
-    of warning.
+    The trap: an ALTO in tenths of a millimetre at 300 dpi holds 254/300 of
+    the pixels, so decoding it at scale 1 crops 18% short, further off with
+    every line down the page, and returns text -- plausible, never empty. It
+    has cost saknussemm two full campaigns, twice.
+
+    Two regimes, because only one of them can actually be checked:
+
+    - **The ALTO declares a page width.** Then the ratio is knowable and is
+      held to 2%.
+    - **It does not.** Then the rightmost line is all there is, and it is an
+      UNDER-estimate of the page: 37-GT-BNL implies 1.181 with a true scale
+      of 1.181, while the pinned Gallica implies 1.247 with a true scale of
+      1.0. The heuristic cannot tell those apart -- so this does not guess.
+      It requires ``--scale`` to be stated and records what the lines imply.
+
+    That last rule exists because the guard's second version tried to guess
+    and silently stopped catching the very corpus it was written for: widening
+    the tolerance to kill a false positive killed the true positive with it.
+    A test now pins both directions.
     """
-    # The reference is the ALTO's DECLARED page width when it has one. The
-    # first version of this guard compared against the rightmost line
-    # instead, and would have refused a perfectly scaled corpus at 1.247
-    # simply because no line reaches the page edge — a guard that cries
-    # wolf gets switched off, which is worse than no guard.
     if page_width:
-        reference, what = page_width, "la largeur de page declaree"
-        tolerance = 0.02
-    else:
-        reference = max(ln.hpos + ln.width for ln in lines)
-        what = "l'etendue des lignes (la page ne declare pas de WIDTH)"
-        # Lines never reach both edges, so the implied ratio is an
-        # OVER-estimate here; only a gross mismatch is actionable.
-        tolerance = 0.30
-    implied = img_width / reference
-    if abs(implied - scale) > tolerance:
+        implied = img_width / page_width
+        if abs(implied - scale) > 0.02:
+            raise SystemExit(
+                f"ECHELLE INCOHERENTE : l'image fait {img_width} px, la page "
+                f"declare {page_width}, soit un rapport de {implied:.3f} — or "
+                f"--scale vaut {scale:.3f}. Rien n'a ete decode."
+            )
+        return
+
+    extent = max(ln.hpos + ln.width for ln in lines)
+    implied = img_width / extent
+    if not scale_was_given:
         raise SystemExit(
-            f"ECHELLE INCOHERENTE : l'image fait {img_width} px, {what} vaut "
-            f"{reference}, soit un rapport de {implied:.3f} — or --scale vaut "
-            f"{scale:.3f}. 300/254 = 1.181 (dixiemes de mm a 300 dpi). "
-            "Rien n'a ete decode."
+            f"ECHELLE INVERIFIABLE : cet ALTO ne declare pas de WIDTH de page, "
+            f"donc l'echelle ne peut pas etre deduite — la ligne la plus a "
+            f"droite ne donne qu'une borne ({implied:.3f}, sur-estimation). "
+            "Passer --scale explicitement. 300/254 = 1.1811 pour un ALTO en "
+            "dixiemes de millimetre a 300 dpi. Rien n'a ete decode."
         )
+    print(
+        f"  echelle {scale:.4f} declaree ; les lignes impliquent au plus "
+        f"{implied:.3f} (borne, la page ne declare pas sa largeur)",
+        flush=True,
+    )
 
 
 def main() -> int:
     alto, image, out = (Path(a) for a in sys.argv[1:4])
-    scale = 1.0
     argv = sys.argv[4:]
-    if "--scale" in argv:
-        scale = float(argv[argv.index("--scale") + 1])
+    scale_was_given = "--scale" in argv
+    scale = float(argv[argv.index("--scale") + 1]) if scale_was_given else 1.0
 
     from kraken import rpred
     from kraken.containers import BaselineLine, Segmentation
@@ -100,7 +119,7 @@ def main() -> int:
     print(f"{alto.name}: {len(lines)} lignes, echelle {scale:.3f}", flush=True)
 
     im = open_image(str(image))
-    _check_scale(lines, im.size[0], scale, _page_width(alto))
+    _check_scale(lines, im.size[0], scale, _page_width(alto), scale_was_given)
 
 
     # Clamp into the image, or kraken silently returns an EMPTY read for
