@@ -114,7 +114,9 @@ def main() -> int:
     from kraken.lib.models import load_any
     from kraken.lib.util import open_image
 
-    model_path = _default_model()
+    model_path = (
+        argv[argv.index("--model") + 1] if "--model" in argv else _default_model()
+    )
     lines = read_lines(alto)
     print(f"{alto.name}: {len(lines)} lignes, echelle {scale:.3f}", flush=True)
 
