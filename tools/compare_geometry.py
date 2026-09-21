@@ -1,3 +1,28 @@
+"""Rendre deux géométries jugeables par un agent — deux modes, mesurés.
+
+Ce que le banc ne peut pas noter, l'œil le tranche : une SCISSION n'a pas de
+vérité terrain géométrique, mais on voit si la coupe tombe dans le blanc ou
+dans une lettre. Encore faut-il un rendu lisible, et ça ne va pas de soi.
+
+**Ce qui ne marche pas** (essayé le 2026-09-22) : des barres dessinées SOUS
+la ligne. L'œil doit projeter vers le haut pour juger l'alignement, et il ne
+le fait pas. Deux copies empilées du crop marchent, mais coûtent le double de
+pixels pour moins de précision — on compare alors d'une bande à l'autre au
+lieu de comparer à la verticale, au même x.
+
+**Mode A — superposition.** Un seul crop, les frontières de A en traits
+verticaux sur la MOITIÉ HAUTE, celles de B sur la moitié basse. Compact.
+Bon pour *balayer* : la dérive qui s'accumule le long d'une ligne saute aux
+yeux.
+
+**Mode B — zoom sur les désaccords.** Seulement les frontières où les deux
+divergent au-delà d'un seuil, chacune dans sa fenêtre agrandie 2x. Bon pour
+*arbitrer* : à ce grossissement on voit si le trait coupe une lettre. Sur
+1 242 frontières, 8 méritaient d'être regardées.
+
+Les deux sont complémentaires : A dit *où* regarder, B dit *qui a raison*.
+"""
+
 import json, sys
 sys.path.insert(0,"/Users/marcel/hans/src"); sys.path.insert(0,"/tmp")
 from PIL import Image, ImageDraw
