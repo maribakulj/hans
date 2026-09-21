@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The bench is the engine of the autonomous loop; it has to be green
+        # on every version saknussemm supports, because that is where a
+        # resolver written here will eventually run.
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[test]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: mypy src/hans
+      # No [parity] extra here on purpose: saknussemm is not published yet,
+      # and a CI that cannot install its dependency is a CI that cannot run.
+      # The parity test skips, and `bench --strict` is what stops anyone
+      # MEASURING in such an environment.
+      - run: pytest -q
