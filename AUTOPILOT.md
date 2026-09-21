@@ -340,4 +340,44 @@ genre qu'on ne remarque pas sans regarder les vrais bords à côté.
 `kraken.tasks.ForcedAlignmentTaskModel` est la voie correcte : il travaille
 sur `record.logits` bruts et recalcule `net.in_scale` par ligne.
 
-**En cours** : mesure de l'alignement moderne contre les vrais bords.
+**L'alignement forcé de kraken est cassé dans les DEUX voies.**
+`kraken.tasks.ForcedAlignmentTaskModel` rend exactement la même compression
+que la voie dépréciée : 18 découpes tassées sur 52 px pour une ligne de
+361 px. Ce n'est donc pas l'enveloppe `BaselineOCRRecord`, c'est le trellis :
+`argmax(trellis[:, -1])` tombe sur le nombre de caractères, donc le chemin se
+termine au plus tôt. Diagnostic non clos — mais inutile de le clore, parce
+qu'il existe mieux.
+
+**Ce qui marche : le décodage NORMAL et ses propres découpes.**
+`rpred` rend un `cuts` par caractère de sa propre prédiction, et ceux-là sont
+justes :
+
+| mot | découpes CTC | vrai (ALTO) |
+|---|---|---|
+| `Classer` | 443..559 | 437..571 |
+| `déterminer` | 930..1129 | 928..1141 |
+| `avoir` | 819..899 | 816..913 |
+| `de` | 543..569 | 538..584 |
+
+Les découpes sont systématiquement un peu plus SERRÉES que les boîtes ALTO —
+attendu : le CTC épouse l'encre, l'ALTO garde une marge. Ce qui compte n'est
+pas la boîte mais la frontière, et les frontières tombent dans les blancs.
+
+**Conséquence sur la conception de `G2`** — et c'est une mesure qui la
+dicte, pas une préférence :
+
+1. décoder la ligne normalement → texte lu + une découpe par caractère ;
+2. aligner le texte lu sur le texte CIBLE (la correction) — saknussemm sait
+   déjà le faire, `core/alignment.py` ;
+3. reporter les découpes sur les frontières de mots de la cible.
+
+C'est plus robuste que l'alignement forcé : quand le modèle se trompe, on
+aligne deux textes au lieu de forcer un chemin dans des émissions qui ne
+portent pas ce qu'on leur impose.
+
+**Piège d'exécution à retenir** : `model.predict` de kraken passe par du
+multiprocessing. Sans garde `if __name__ == "__main__":` chaque worker
+réexécute le script entier et la machine part en boucle de spawn. Le
+résolveur doit être import-safe.
+
+**En cours** : écrire `CTCCutsResolver` sur ce principe et le mesurer.
