@@ -286,3 +286,58 @@ là-dessus, avant qu'une seule ligne de CTC existe.
 Ce que la règle 4 a attrapé ici, ce n'est pas un chiffre flatteur pour un
 modèle : c'est un chiffre flatteur pour **l'incumbent**, qui aurait fait
 annuler le projet. Elle marche dans les deux sens.
+
+### 2026-09-21 (suite) — le corpus, le modèle, et un piège dans kraken
+
+**Item 0 fait** (saknussemm `d912714`, branche `couture-geometrie-mot`) :
+`_geometry_is_usable` et `_resolve_geometry` ont 13 tests, un par refus.
+1805 tests verts.
+
+**Troisième corpus choisi — et la règle 3 appliquée avant de mesurer.**
+`tests/external_corpus/pinned` de saknussemm épingle trois documents Gallica
+avec leur sha256 : monographie 1850 (*Histoire naturelle*), monographie 1850
+mode texte (*Périodes de l'histoire de la médecine*), quotidien
+multi-colonnes 1890 (*Le Temps*). Les trois portent des `String` avec
+`HPOS`/`WIDTH` et `WC`.
+
+- **Images** : l'API IIIF de Gallica répond (200), contrairement aux accès
+  agent bloqués ailleurs. `https://gallica.bnf.fr/iiif/ark:/12148/<ark>/f<n>/full/full/0/native.jpg`.
+- **Règle 10, vérifiée AVANT de mesurer** : l'image rendue fait 1749×2481 et
+  l'ALTO déclare `WIDTH="1749" HEIGHT="2481"`. **Facteur 1, aucune
+  transformation.** Ce n'est pas le piège `300/254` de `37-GT-BNL`.
+- **Limite du corpus, écrite plutôt que tue** : deux des trois corpus
+  (`BnF-bpt6k3265015q` et celui-ci) viennent de la même chaîne de production
+  BnF/Gallica. La règle « deux sur trois » est donc moins indépendante
+  qu'elle en a l'air. À dire dans le verdict, quel qu'il soit.
+- **Encodage** : ces ALTO déclarent `ISO-8859-1` et contiennent de l'UTF-8.
+  `CONTENT` doit passer par `.encode('latin-1').decode('utf-8')`, sinon
+  « raisonnée » arrive comme « raisonnÃ©e » et le codec du modèle rejette la
+  séquence.
+
+**Modèle : CATMuS-Print Large** (`10.5281/zenodo.10592716`, 22,9 Mo),
+diachronique pour les imprimés français.
+
+**Le risque principal de G2 est levé.** J'avais écrit qu'il fallait vérifier
+en premier si les émissions restent informatives sur du français ancien. Un
+décodage **libre** sur six lignes de 1850 : le modèle lit juste, et il
+*corrige* même l'OCR de l'ALTO — `zooloÃ¢idue` (ALTO) contre `zoologique`
+(modèle), `l'ouÃ¯e` contre `l'ouie`. Les émissions ne dérivent pas.
+
+Note de méthode : la « prediction » que rend `forced_align` est le texte
+cible ré-émis caractère par caractère. Elle ne prouve **rien** sur le modèle.
+Seul le décodage libre le prouve, et c'est celui-là qu'il faut regarder.
+
+**Piège trouvé dans kraken — `kraken.align.forced_align` est inutilisable.**
+Le module est déprécié (« will be removed with kraken 8 ») et il est cassé
+avec ce modèle : il fait `torch.tensor(model.outputs).log_softmax(0)` sur des
+sorties **déjà normalisées**. Chaque trame ajoute alors un coût quasi
+constant, le chemin forcé a donc intérêt à finir au plus tôt, et
+`argmax(trellis[:, -1])` tombe exactement sur le nombre de caractères : 18
+trames pour 18 caractères là où la ligne en compte 116. Les boîtes sortent
+comprimées contre le bord gauche — **plausibles, jamais vides**, donc du
+genre qu'on ne remarque pas sans regarder les vrais bords à côté.
+
+`kraken.tasks.ForcedAlignmentTaskModel` est la voie correcte : il travaille
+sur `record.logits` bruts et recalcule `net.in_scale` par ligne.
+
+**En cours** : mesure de l'alignement moderne contre les vrais bords.
