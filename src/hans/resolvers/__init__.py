@@ -2,12 +2,14 @@
 
 from hans.resolvers.ctc import CTCCutsResolver
 from hans.resolvers.inkgap import InkGapResolver
+from hans.resolvers.inksnap import InkSnapResolver
 from hans.resolvers.proportional import ProportionalResolver
 from hans.resolvers.tesseract import TesseractWordsResolver
 
 __all__ = [
     "CTCCutsResolver",
     "InkGapResolver",
+    "InkSnapResolver",
     "ProportionalResolver",
     "TesseractWordsResolver",
 ]

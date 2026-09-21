@@ -197,9 +197,7 @@ def read_page_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLi
                 broken = True
                 break
             words.append(
-                WordBox(
-                    text=repair_mojibake(text), hpos=box[0], width=box[2] - box[0]
-                )
+                WordBox(text=repair_mojibake(text), hpos=box[0], width=box[2] - box[0])
             )
         if broken or len(words) < min_words:
             continue

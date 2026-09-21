@@ -29,7 +29,9 @@ class InkGapResolver:
     #: Y glisser quand même déplacerait un mot entier.
     TOLERANCE_CHARS = 1.5
 
-    def __init__(self, gaps: dict[str, list[tuple[int, int]]], *, name: str | None = None):
+    def __init__(
+        self, gaps: dict[str, list[tuple[int, int]]], *, name: str | None = None
+    ):
         self._gaps = gaps
         self.name = name or "ink gaps (sans modele)"
         self._base = ProportionalResolver()
