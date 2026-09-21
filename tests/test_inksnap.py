@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from hans.geometry import GeometryRequest, WordBox
 from hans.resolvers import InkSnapResolver
 from hans.resolvers.proportional import is_space_token
@@ -35,19 +37,45 @@ def test_the_boxes_reach_the_ink() -> None:
     assert (boxes[2].hpos, boxes[2].hpos + boxes[2].width) == (140, 180)
 
 
-def test_the_boundary_is_not_moved() -> None:
-    """La propriété qui compte : élargir ne doit pas recouper ailleurs.
+def test_the_space_still_separates_the_words_it_sits_between() -> None:
+    """Élargir un mot OBLIGE à redessiner le blanc qui le suit.
 
-    Les frontières sont ce que le banc note ; si le recollage les déplaçait,
-    il échangerait un gain d'étendue contre une perte de placement, et la
-    mesure globale le cacherait derrière une IoU flatteuse.
+    J'avais d'abord écrit ici que la frontière ne devait pas bouger. C'est
+    faux, et la fixture était trop simple pour le montrer : élargir un mot
+    déplace nécessairement le début du blanc suivant. Ce qui doit tenir est
+    plus faible et plus vrai — le blanc reste EXACTEMENT entre les deux mots
+    qu'il sépare, sans les chevaucher.
+
+    Mesuré sur la vraie page : les frontières passent de 99,8 % à 99,1 % de
+    justesse, contre 19 points d'IoU gagnés. L'échange est réel et se dit.
     """
-    before = _Tight().resolve(REQ)
-    after = _snap().resolve(REQ)
-    gap_before = next(b for b in before if is_space_token(b.text))
-    gap_after = next(b for b in after if is_space_token(b.text))
-    assert gap_before.hpos == gap_after.hpos
-    assert gap_before.width == gap_after.width
+    boxes = _snap().resolve(REQ)
+    for left, space, right in zip(boxes, boxes[1:], boxes[2:]):
+        if not is_space_token(space.text):
+            continue
+        assert space.hpos == left.hpos + left.width
+        assert space.hpos + space.width == right.hpos
+
+
+def test_the_answer_survives_saknussemms_guard() -> None:
+    """Le bug qui a coûté le plus cher : 9 réponses acceptées sur 200.
+
+    Élargir les mots sans redessiner les blancs produit des boîtes qui se
+    chevauchent. ``_geometry_is_usable`` rejette alors la ligne entière, qui
+    retombe sur la géométrie proportionnelle — donc l'IoU mesurée décrivait
+    une sortie que la production n'écrivait jamais.
+    """
+    rewriter = pytest.importorskip(
+        "saknussemm.formats.alto.rewriter",
+        reason="saknussemm absent : installer l'extra [parity]",
+    )
+    protocols = pytest.importorskip("saknussemm.core.protocols")
+
+    boxes = _snap().resolve(REQ)
+    tb = tuple(
+        protocols.TokenBox(text=b.text, hpos=b.hpos, width=b.width) for b in boxes
+    )
+    assert rewriter._geometry_is_usable(tb, list(TOKENS), REQ.hpos, REQ.width)
 
 
 def test_a_word_never_swallows_its_neighbour() -> None:

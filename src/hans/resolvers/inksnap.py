@@ -88,4 +88,38 @@ class InkSnapResolver:
                 out.append(WordBox(b.text, int(nh), int(nr - nh)))
             else:
                 out.append(b)
-        return tuple(out)
+        return _respace(tuple(out), request)
+
+
+def _respace(
+    boxes: tuple[WordBox, ...], request: GeometryRequest
+) -> tuple[WordBox, ...]:
+    """Redessiner les espaces entre les mots élargis.
+
+    Sans ça, élargir un mot le fait mordre sur le blanc qui le suit, les
+    boîtes se chevauchent, et ``_geometry_is_usable`` de saknussemm REJETTE
+    la ligne entière — qui retombe alors sur la géométrie proportionnelle.
+
+    Mesuré avant d'être corrigé : **9 réponses acceptées sur 200**. L'IoU de
+    0,898 était donc calculée sur une géométrie que la production n'aurait
+    jamais écrite. Une mesure qui ne franchit pas la porte ne vaut rien, et
+    c'était la deuxième fois de la soirée — la première étant le producteur
+    ``page_aligned``, mesuré et injoignable.
+    """
+    out: list[WordBox] = []
+    for i, b in enumerate(boxes):
+        if not is_space_token(b.text):
+            out.append(b)
+            continue
+        left = out[-1].hpos + out[-1].width if out else request.hpos
+        nxt = next(
+            (
+                boxes[j]
+                for j in range(i + 1, len(boxes))
+                if not is_space_token(boxes[j].text)
+            ),
+            None,
+        )
+        right = nxt.hpos if nxt else request.hpos + request.width
+        out.append(WordBox(b.text, int(left), max(1, int(right - left))))
+    return tuple(out)
