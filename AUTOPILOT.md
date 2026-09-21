@@ -428,3 +428,47 @@ montre.
 millimètre (facteur `300/254`). Décoder ses lignes sans transformation
 donnerait des crops décalés de 18 %, plausibles et jamais vides. À traiter
 explicitement avant toute mesure sur ce corpus.
+
+### 2026-09-21 (suite 2) — le candidat existe, et il gagne sur deux corpus
+
+`CTCCutsResolver` complet : appariement plié (sans casse ni accents),
+**repli sur le proportionnel** quand moins de la moitié de la cible est
+ancrée dans ce que le modèle a lu. Ce repli n'est pas une commodité : c'est
+ce que la couture de saknussemm fait déjà, donc c'est le seul candidat dont
+la mesure décrive ce qui serait réellement livré. Noter un refus comme un
+échec laisserait le candidat améliorer son pire cas en déclinant les lignes
+difficiles.
+
+**Deux bugs à moi, tous deux silencieux.**
+
+1. Plier la chaîne entière change sa longueur ; l'aligneur travaille sur le
+   texte plié, les positions sont indexées dans l'original. Le candidat est
+   tombé de 99,6 % à 77,7 % **sans que rien ne lève**. Pliage désormais
+   caractère à caractère, invariant épinglé.
+2. Le garde-fou d'échelle comparait l'étendue des *lignes* à la largeur de
+   l'image, et aurait refusé un corpus parfaitement calé (1,247) parce
+   qu'aucune ligne n'atteint le bord de page. Il lit maintenant le `WIDTH`
+   déclaré par `Page`. Un garde qui crie au loup finit désactivé.
+
+**Mesures, métrique du point médian, `--strict` :**
+
+| corpus | résolveur | ≤ 0,5 car. | pire |
+|---|---|---|---|
+| `bpt6k2206225` p.15 | proportionnel | 83,0 % | 34 px |
+| | **CTC** | **100,0 %** | 1,5 px |
+| `BnF-bpt6k3265015q` | proportionnel | 84,4 % | 207,5 px |
+| | **CTC** | **99,8 %** | 59,5 px |
+
+**Échelle vérifiée partout avant de mesurer** : les trois pages Gallica
+déclarent exactement la largeur de leur image (facteur 1) ; `37-GT-BNL` est
+bien à `1,1811` et est décodé avec, le garde-fou refusant toute autre valeur.
+
+**Piège évité** : `37-GT-BNL` porte 509 lignes pour **40 identifiants
+distincts**. Un cache fusionné aurait donné à la moitié des lignes la
+géométrie d'une autre page, en silence. D'où `score_many`, qui garde un
+résolveur par fichier et ne met en commun que les erreurs.
+
+**En cours** : décodage de `Le Temps` (1103 lignes) et des 40 fichiers
+`37-GT-BNL`. Ensuite `python -m hans.campaign campaigns/h1.json --strict`,
+qui appellera `verdict.decide`. **Le verdict n'est pas encore rendu** : il
+faut trois corpus et il n'y en a que deux de mesurés.
