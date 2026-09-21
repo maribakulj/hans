@@ -90,6 +90,21 @@ externe, un projet de mesure n'en a pas.
    déjà coûté deux campagnes complètes à saknussemm, **deux fois**. Écrire le
    crop sur disque et le regarder coûte trente secondes.
 
+9. **Lire le README AVANT le premier grep.** Payé le 2026-09-21 : une
+   soirée entière à mesurer, écrire et corriger un mode « bloc » qui existait
+   déjà dans saknussemm sous le nom `PageLLMEditProducer`, documenté en
+   section 4 du README sous le titre « Two modes, and the one thing that
+   separates them », avec le tableau des coûts. Un grep trouve ce qu'on sait
+   nommer ; il ne trouve jamais ce qu'on n'a pas pensé à nommer. Avant
+   d'ouvrir une hypothèse sur un dépôt : son README, puis la liste de ses
+   paquets publics, puis le premier paragraphe du docstring de chaque module.
+   Ensuite seulement, chercher.
+
+10. **Demander « que fait déjà ce code ? » avant « ce code permet-il mon
+    idée ? ».** Même date, même facture. Un document de conception reçu n'est
+    pas un cahier des charges : c'est une proposition, et la première chose à
+    faire est de la confronter à ce qui est déjà construit.
+
 Et trois que la nature de ce dépôt impose :
 
 6. **Une mesure prise là où le test de parité a SAUTÉ n'est pas une mesure.**
