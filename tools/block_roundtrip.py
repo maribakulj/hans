@@ -43,6 +43,33 @@ SYSTEM = (
 )
 
 
+def all_lines(alto: Path):
+    """TOUTES les TextLine du document, pas seulement les mesurables.
+
+    ``hans.alto.read_lines`` écarte les lignes sans géométrie complète ou de
+    moins de deux mots — 538 sur 566 ici. C'est ce qu'il faut pour NOTER une
+    géométrie, et c'est faux pour linéariser : deux entrées consécutives ne
+    sont alors plus voisines dans le document, et la queue d'un mot coupé
+    atterrit sur une ligne écartée. Mesuré : 8 lignes reçoivent le texte de
+    leur voisine, et la fidélité tombe à 96,7 % au lieu de 100 %.
+    """
+    from lxml import etree
+
+    out = []
+    for el in etree.parse(str(alto)).iter():
+        if not isinstance(el.tag, str) or etree.QName(el).localname != "TextLine":
+            continue
+        words = [
+            c.get("CONTENT")
+            for c in el
+            if isinstance(c.tag, str)
+            and etree.QName(c).localname == "String"
+            and c.get("CONTENT")
+        ]
+        out.append((el.get("ID") or f"line-{len(out)}", " ".join(words)))
+    return out
+
+
 def hyphenated_ids(alto: Path) -> set[str]:
     """Les lignes que l'ALTO marque comme coupées, via leur élément <HYP>."""
     from lxml import etree
@@ -66,7 +93,11 @@ def linearise(lines, hyphen_ids: frozenset[str] | set[str] = frozenset()):
     pour un mot recollé, les deux lignes et les deux fragments d'origine.
     C'est ce qui permettra de le recouper.
     """
-    index = [(ln.line_id, " ".join(w.text for w in ln.words)) for ln in lines]
+    index = (
+        lines
+        if lines and isinstance(lines[0], tuple)
+        else [(ln.line_id, " ".join(w.text for w in ln.words)) for ln in lines]
+    )
 
     block_lines: list[str] = []
     owners: list[dict] = []
@@ -186,7 +217,7 @@ def main() -> int:
     model = sys.argv[3] if len(sys.argv) > 3 else "mistral-small-latest"
     key = Path(os.environ["MISTRAL_KEY_FILE"]).read_text().strip()
 
-    lines = read_lines(alto)
+    lines = all_lines(alto)
     block, index, owners = linearise(lines, hyphenated_ids(alto))
     joins = sum(1 for o in owners if "tail_line" in o)
     print(
