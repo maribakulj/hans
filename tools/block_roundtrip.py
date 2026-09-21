@@ -1,17 +1,36 @@
 """H4 : linéariser une page en un bloc, corriger en un appel, reprojeter.
 
-    python tools/block_roundtrip.py <alto.xml> <sortie.json>
+    MISTRAL_KEY_FILE=<clé> python tools/block_roundtrip.py <alto.xml> <sortie.json>
 
-Ne demande au modèle aucune structure : il reçoit du texte continu, mots
-coupés recollés, et rend du texte continu. Les lignes sont reconstituées ici,
-par alignement déterministe sur le bloc source.
+Le modèle ne reçoit aucune structure : du texte continu, mots coupés
+recollés, et il rend du texte continu. Les lignes sont reconstituées ici, par
+alignement déterministe — sans pixels : `core/alignment.py` de saknussemm
+ferait le même travail.
+
+Deux pièges appris en l'écrivant, tous deux silencieux :
+
+- le trait d'union d'une césure vit dans un élément ``<HYP>``, PAS dans le
+  ``CONTENT`` du ``String``. Le chercher en fin de texte n'en trouve que 13
+  sur 115, laisse autant de lignes finir au milieu d'un mot, et le correcteur
+  ajoute alors lui-même le tiret manquant ;
+- recoller un mot coupé OBLIGE à le recouper à la re-projection. Sans ça sa
+  seconde moitié disparaît de la ligne suivante, et la page perd du texte
+  sans que rien ne le signale.
 """
+
 from __future__ import annotations
-import json, os, sys, urllib.request
+
+import json
+import os
+import sys
+import urllib.request
 from difflib import SequenceMatcher
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from hans.alto import read_lines  # noqa: E402
+
+HYPHENS = "-¬‐‑­"
 
 SYSTEM = (
     "Tu es un moteur de correction post-OCR pour documents patrimoniaux.\n"
@@ -19,20 +38,13 @@ SYSTEM = (
     "l'orthographe historique intentionnelle, la ponctuation d'origine.\n"
     "Ne traduis pas, ne modernise pas, ne resume pas, n'ajoute ni ne supprime "
     "de phrase.\n"
-    "Rends UNIQUEMENT le texte corrige, un paragraphe par paragraphe recu, "
+    "Rends UNIQUEMENT le texte corrige, une ligne de sortie par ligne recue, "
     "dans le meme ordre."
 )
 
-def hyphenated_ids(alto: Path) -> set[str]:
-    """Les lignes que l'ALTO marque comme coupées, via leur element <HYP>.
 
-    Indispensable, et appris à la dure : le trait d'union d'une césure vit
-    dans un element <HYP> propre, PAS dans le CONTENT du String. Chercher un
-    tiret en fin de texte n'en trouve que 13 sur 115, laisse 102 lignes se
-    terminer au milieu d'un mot, et le correcteur ajoute alors lui-même le
-    tiret qui manque — ce qui se lit comme un échec de re-projection alors
-    que c'est un bloc mal préparé.
-    """
+def hyphenated_ids(alto: Path) -> set[str]:
+    """Les lignes que l'ALTO marque comme coupées, via leur élément <HYP>."""
     from lxml import etree
 
     out = set()
@@ -42,90 +54,163 @@ def hyphenated_ids(alto: Path) -> set[str]:
         if any(
             isinstance(c.tag, str) and etree.QName(c).localname == "HYP" for c in el
         ):
-            lid = el.get("ID")
-            if lid:
-                out.add(lid)
+            if el.get("ID"):
+                out.add(el.get("ID"))
     return out
 
 
-def linearise(lines, hyphen_ids=frozenset()):
-    """Un mot par ligne source, césures recollées. Retourne (bloc, index)."""
-    parts, index = [], []
-    for ln in lines:
-        txt = " ".join(w.text for w in ln.words)
-        index.append((ln.line_id, txt))
-        parts.append(txt)
-    # recoller : une ligne finissant par un trait d'union se soude a la suivante
-    block, joins = [], []
-    i = 0
-    while i < len(parts):
-        cur = parts[i]
-        if cur.endswith(("-", "¬", "‐", "‑")) and i + 1 < len(parts):
-            nxt = parts[i + 1]
-            head = nxt.split(" ", 1)[0]
-            block.append(cur + head)
-            rest = nxt.split(" ", 1)[1] if " " in nxt else ""
-            joins.append(i)
-            parts[i + 1] = rest
-            i += 1
-            if rest:
-                continue
-            i += 1
-            continue
-        block.append(cur)
-        i += 1
-    return "\n".join(p for p in block if p), index, joins
+def linearise(lines, hyphen_ids: frozenset[str] | set[str] = frozenset()):
+    """``(bloc, index, owners)``.
+
+    ``owners`` donne, pour chaque mot du bloc, la ligne d'où il vient — et,
+    pour un mot recollé, les deux lignes et les deux fragments d'origine.
+    C'est ce qui permettra de le recouper.
+    """
+    index = [(ln.line_id, " ".join(w.text for w in ln.words)) for ln in lines]
+
+    block_lines: list[str] = []
+    owners: list[dict] = []
+    carry: tuple[str, str, str] | None = None  # (fragment, ligne, tiret visible)
+
+    for i, (lid, txt) in enumerate(index):
+        cur = txt
+        pending: dict | None = None
+        if carry is not None:
+            head, head_line, head_suffix = carry
+            tail, _, rest = cur.partition(" ")
+            pending = {
+                "word": head + tail, "line": head_line,
+                "tail_line": lid, "head": head, "tail": tail,
+                "head_suffix": head_suffix,
+            }
+            cur = rest
+            carry = None
+
+        is_cut = lid in hyphen_ids or cur.rstrip().endswith(tuple(HYPHENS))
+        words = cur.split()
+        if is_cut and i + 1 < len(index) and words:
+            raw = words.pop()
+            last = raw.rstrip(HYPHENS)
+            # Le tiret VISIBLE dans le CONTENT fait partie du texte de la
+            # ligne ; celui d'un element <HYP> n'y est pas. Le premier doit
+            # revenir au recoupage, le second non — sinon le controle a vide
+            # echoue sur 13 lignes et on croit a un defaut de re-projection.
+            carry = (last, lid, raw[len(last):])
+
+        emitted = ([pending] if pending else []) + [
+            {"word": w, "line": lid} for w in words
+        ]
+        if emitted:
+            owners.extend(emitted)
+            block_lines.append(" ".join(o["word"] for o in emitted))
+
+    if carry is not None:
+        owners.append({"word": carry[0], "line": carry[1]})
+        block_lines.append(carry[0])
+
+    return "\n".join(block_lines), index, owners
+
 
 def correct(block: str, model: str, key: str) -> tuple[str, dict]:
-    body = json.dumps({
-        "model": model, "temperature": 0,
-        "messages": [{"role": "system", "content": SYSTEM},
-                     {"role": "user", "content": block}],
-    }).encode()
+    body = json.dumps(
+        {
+            "model": model,
+            "temperature": 0,
+            "messages": [
+                {"role": "system", "content": SYSTEM},
+                {"role": "user", "content": block},
+            ],
+        }
+    ).encode()
     req = urllib.request.Request(
-        "https://api.mistral.ai/v1/chat/completions", data=body,
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=600) as r:
+        "https://api.mistral.ai/v1/chat/completions",
+        data=body,
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=900) as r:
         d = json.loads(r.read())
     return d["choices"][0]["message"]["content"], d.get("usage", {})
 
-def reproject(corrected: str, index) -> dict[str, str]:
-    """Rendre chaque ligne son texte, par alignement de MOTS sur le bloc source."""
-    src_words, owner = [], []
-    for lid, txt in index:
-        for w in txt.split():
-            src_words.append(w); owner.append(lid)
-    tgt_words = corrected.split()
-    out: dict[str, list[str]] = {lid: [] for lid, _ in index}
-    sm = SequenceMatcher(None, src_words, tgt_words, autojunk=False)
+
+def _resplit(joined: str, owner: dict) -> tuple[str, str]:
+    """Recouper un mot recollé là où la césure le coupait.
+
+    La frontière est cherchée dans le mot CORRIGÉ en alignant celui-ci sur
+    les deux fragments d'origine : une correction qui change la longueur du
+    mot déplacerait sinon la coupe.
+    """
+    head, tail = owner["head"], owner["tail"]
+    sm = SequenceMatcher(None, head + tail, joined, autojunk=False)
+    boundary = len(head)
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if i1 <= boundary <= i2:
+            offset = min(boundary - i1, j2 - j1)
+            boundary = j1 + offset
+            break
+    else:
+        boundary = min(len(head), len(joined))
+    return joined[:boundary] + owner.get("head_suffix", ""), joined[boundary:]
+
+
+def reproject(corrected: str, index, owners) -> dict[str, str]:
+    """Rendre à chaque ligne son texte, par alignement de mots."""
+    src = [o["word"] for o in owners]
+    tgt = corrected.split()
+    out: dict[str, list[str]] = {lid: [] for lid, _ in index}
+
+    def place(word: str, k: int) -> None:
+        o = owners[k] if k < len(owners) else owners[-1]
+        if "tail_line" in o:
+            a, b = _resplit(word, o)
+            if a:
+                out[o["line"]].append(a)
+            if b:
+                out[o["tail_line"]].append(b)
+        else:
+            out[o["line"]].append(word)
+
+    for tag, i1, i2, j1, j2 in SequenceMatcher(
+        None, src, tgt, autojunk=False
+    ).get_opcodes():
         if tag == "equal":
             for k in range(i2 - i1):
-                out[owner[i1 + k]].append(tgt_words[j1 + k])
+                place(tgt[j1 + k], i1 + k)
         elif tag in ("replace", "insert"):
-            # attribuer le bloc cible a la ligne du premier mot source couvert
-            lid = owner[i1] if i1 < len(owner) else owner[-1]
-            for w in tgt_words[j1:j2]:
-                out[lid].append(w)
+            for k, w in enumerate(tgt[j1:j2]):
+                place(w, min(i1 + k, max(i1, i2 - 1)))
     return {lid: " ".join(ws) for lid, ws in out.items()}
+
 
 def main() -> int:
     alto, out_path = Path(sys.argv[1]), Path(sys.argv[2])
     model = sys.argv[3] if len(sys.argv) > 3 else "mistral-small-latest"
     key = Path(os.environ["MISTRAL_KEY_FILE"]).read_text().strip()
+
     lines = read_lines(alto)
-    block, index, joins = linearise(lines, hyphenated_ids(alto))
-    print(f"{len(lines)} lignes -> bloc de {len(block)} car., {len(joins)} césures recollées", flush=True)
+    block, index, owners = linearise(lines, hyphenated_ids(alto))
+    joins = sum(1 for o in owners if "tail_line" in o)
+    print(
+        f"{len(lines)} lignes -> bloc de {len(block)} car., "
+        f"{joins} césures recollées",
+        flush=True,
+    )
     corrected, usage = correct(block, model, key)
     print(f"usage: {usage}", flush=True)
-    proj = reproject(corrected, index)
-    out_path.write_text(json.dumps({
-        "model": model, "usage": usage, "joins": len(joins),
-        "source": {lid: txt for lid, txt in index}, "projected": proj,
-        "block_in": block, "block_out": corrected,
-    }, ensure_ascii=False), encoding="utf-8")
+    proj = reproject(corrected, index, owners)
+    out_path.write_text(
+        json.dumps(
+            {
+                "model": model, "usage": usage, "joins": joins,
+                "source": dict(index), "projected": proj,
+                "block_in": block, "block_out": corrected,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     print(f"-> {out_path}", flush=True)
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
