@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from hans.alto import read_lines  # noqa: E402
+from hans.alto import read_lines, read_page_lines  # noqa: E402
 
 
 def _xs(cut: object) -> list[int]:
@@ -37,12 +37,12 @@ def _xs(cut: object) -> list[int]:
 
 
 def _page_width(alto: Path) -> int | None:
-    """The ALTO's own declared page width, when it has one."""
+    """The declared page width (ALTO @WIDTH, or PAGE @imageWidth)."""
     from lxml import etree
 
     for el in etree.parse(str(alto)).iter():
         if isinstance(el.tag, str) and etree.QName(el).localname == "Page":
-            raw = el.get("WIDTH")
+            raw = el.get("WIDTH") or el.get("imageWidth")
             return int(float(raw)) if raw else None
     return None
 
@@ -117,7 +117,8 @@ def main() -> int:
     model_path = (
         argv[argv.index("--model") + 1] if "--model" in argv else _default_model()
     )
-    lines = read_lines(alto)
+    reader = read_page_lines if alto.read_text(errors="replace")[:4000].find("PcGts") >= 0 else read_lines
+    lines = reader(alto)
     print(f"{alto.name}: {len(lines)} lignes, echelle {scale:.3f}", flush=True)
 
     im = open_image(str(image))

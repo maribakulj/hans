@@ -147,3 +147,75 @@ def read_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLine]:
         )
 
     return lines
+
+
+def read_page_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLine]:
+    """Les lignes d'un PAGE XML, avec la géométrie de ses ``Word``.
+
+    Même contrat que :func:`read_lines` : une ligne n'est admise que si tous
+    ses mots portent une géométrie exploitable. PAGE donne des polygones
+    (``Coords points="x,y x,y ..."``) et non des rectangles ; on prend
+    l'enveloppe horizontale, qui est tout ce que ce banc mesure.
+    """
+    tree = etree.parse(str(path))
+    lines: list[ReferenceLine] = []
+
+    def extent(el: etree._Element) -> tuple[int, int, int, int] | None:
+        for c in el:
+            if not isinstance(c.tag, str) or _local(c) != "Coords":
+                continue
+            pts = []
+            for pair in (c.get("points") or "").split():
+                try:
+                    x, y = pair.split(",")
+                    pts.append((int(float(x)), int(float(y))))
+                except ValueError:
+                    return None
+            if not pts:
+                return None
+            xs = [p[0] for p in pts]
+            ys = [p[1] for p in pts]
+            return min(xs), min(ys), max(xs), max(ys)
+        return None
+
+    for el in tree.iter():
+        if not isinstance(el.tag, str) or _local(el) != "TextLine":
+            continue
+        words: list[WordBox] = []
+        broken = False
+        for child in el:
+            if not isinstance(child.tag, str) or _local(child) != "Word":
+                continue
+            box = extent(child)
+            text = None
+            for te in child:
+                if isinstance(te.tag, str) and _local(te) == "TextEquiv":
+                    for u in te:
+                        if isinstance(u.tag, str) and _local(u) == "Unicode":
+                            text = u.text
+            if box is None or not text or box[2] <= box[0]:
+                broken = True
+                break
+            words.append(
+                WordBox(
+                    text=repair_mojibake(text), hpos=box[0], width=box[2] - box[0]
+                )
+            )
+        if broken or len(words) < min_words:
+            continue
+        if any(b.hpos < a.hpos for a, b in pairwise(words)):
+            continue
+        lb = extent(el)
+        if lb is None:
+            continue
+        lines.append(
+            ReferenceLine(
+                line_id=el.get("id") or el.get("ID") or f"line-{len(lines)}",
+                hpos=lb[0],
+                vpos=lb[1],
+                width=lb[2] - lb[0],
+                height=lb[3] - lb[1],
+                words=tuple(words),
+            )
+        )
+    return lines
