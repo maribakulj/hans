@@ -1,0 +1,13 @@
+{
+  "root": "/",
+  "corpora": {
+    "BnF-bpt6k3265015q": [
+      {"alto": "Users/marcel/cinoc/corpus/BnF-bpt6k3265015q/X0000002.xml", "cuts": "tmp/cuts_bnf.json"}
+    ],
+    "Gallica-pinned": [
+      {"alto": "Users/marcel/saknussemm/tests/external_corpus/pinned/bpt6k2206225_p0015.alto.xml", "cuts": "tmp/cuts_g15.json"},
+      {"alto": "Users/marcel/saknussemm/tests/external_corpus/pinned/bpt6k6478860m_p0009.alto.xml", "cuts": "tmp/cuts_med.json"},
+      {"alto": "Users/marcel/saknussemm/tests/external_corpus/pinned/bpt6k2324031_p0002.alto.xml", "cuts": "tmp/cuts_temps.json"}
+    ]
+  }
+}

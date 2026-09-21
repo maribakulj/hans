@@ -22,6 +22,7 @@ loop's CI, stay installable without a 2 GB wheel.
 
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
@@ -47,6 +48,54 @@ class LineCuts:
             )
 
 
+def _fold(text: str) -> str:
+    """Case- and accent-insensitive form, used ONLY to find the match.
+
+    Positions always come from the original characters; this only decides
+    which character corresponds to which. Measured on 2026-09-21: the
+    heading ``Chronique Locale`` in the ALTO is read ``CHRONIQUE LOCALE`` by
+    the model -- small capitals -- and a case-sensitive matcher anchors
+    almost nothing on such a line, falls back to interpolating across its
+    whole width, and puts a boundary 168 px out. The characters are the same
+    characters; only their case differs, and case is not geometry.
+    """
+    return "".join(_fold_char(c) for c in text)
+
+
+def _fold_char(char: str) -> str:
+    """Exactly one character out for one character in.
+
+    The invariant is load-bearing and it was learned the hard way: the
+    matcher runs on the folded strings while the POSITIONS are indexed in
+    the originals, so a fold that changes length silently shifts every
+    position after it. Folding naively -- lower(), NFD, drop the combining
+    marks over the whole string -- did exactly that, and dropped the
+    candidate from 99.6% to 77.7% on a corpus it had got right. Nothing
+    raised; the boxes just moved.
+    """
+    lowered = char.lower()
+    base = "".join(
+        c for c in unicodedata.normalize("NFD", lowered) if not unicodedata.combining(c)
+    )
+    return base[0] if base else char
+
+
+def support(read: LineCuts, target: str) -> float:
+    """Share of ``target`` the recogniser's reading can actually anchor.
+
+    The pixel evidence for a transcription, reduced to one number. Where it
+    is low, the model and the target are not describing the same ink -- a
+    garbled source, a hallucinated correction, a heading the model missed --
+    and geometry invented there would have nothing underneath it.
+    """
+    if not target:
+        return 0.0
+    blocks = SequenceMatcher(
+        None, _fold(read.text), _fold(target), autojunk=False
+    ).get_matching_blocks()
+    return sum(size for _, _, size in blocks) / len(target)
+
+
 def _char_positions(read: LineCuts, target: str) -> list[tuple[float, float] | None]:
     """One span per character of ``target``, or None where nothing matched.
 
@@ -56,7 +105,7 @@ def _char_positions(read: LineCuts, target: str) -> list[tuple[float, float] | N
     unmatched positions are filled in afterwards rather than guessed here.
     """
     out: list[tuple[float, float] | None] = [None] * len(target)
-    matcher = SequenceMatcher(None, read.text, target, autojunk=False)
+    matcher = SequenceMatcher(None, _fold(read.text), _fold(target), autojunk=False)
     for src, dst, size in matcher.get_matching_blocks():
         for k in range(size):
             x0, x1 = read.spans[src + k]

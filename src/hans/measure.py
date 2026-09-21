@@ -126,6 +126,54 @@ def score(resolver: Resolver, cases: list[MergeCase]) -> Report:
     exception is a refusal to answer and averaging it in as a perfect score
     would reward crashing on the hard cases.
     """
+    return score_many([(resolver, cases)], resolver.name)
+
+
+def score_many(groups: list[tuple[Resolver, list[MergeCase]]], name: str) -> Report:
+    """One report over several (resolver, cases) groups.
+
+    A corpus is not always one file, and line IDs are not always unique
+    across the files of one corpus — ``37-GT-BNL`` carries 509 lines under
+    40 distinct IDs. Merging its cut caches would silently hand half the
+    lines the geometry of a different page, so each file keeps its own
+    resolver and only the ERRORS are pooled.
+    """
+    errors: list[float] = []
+    normalised: list[float] = []
+    failures = 0
+    total_cases = 0
+
+    for resolver, cases in groups:
+        total_cases += len(cases)
+        e, n, f = _collect(resolver, cases)
+        errors.extend(e)
+        normalised.extend(n)
+        failures += f
+
+    if not errors:
+        return Report(name, total_cases, 0, failures, 0, 0, 0, 0, 0, 0)
+
+    return Report(
+        resolver=name,
+        cases=total_cases,
+        boundaries=len(errors),
+        failures=failures,
+        mean=sum(errors) / len(errors),
+        median=median(errors),
+        p90=_percentile(errors, 0.90),
+        worst=max(errors),
+        mean_chars=sum(normalised) / len(normalised) if normalised else 0.0,
+        within_half_char=(
+            sum(1 for e in normalised if e <= 0.5) / len(normalised)
+            if normalised
+            else 0.0
+        ),
+    )
+
+
+def _collect(
+    resolver: Resolver, cases: list[MergeCase]
+) -> tuple[list[float], list[float], int]:
     errors: list[float] = []
     normalised: list[float] = []
     failures = 0
@@ -145,22 +193,4 @@ def score(resolver: Resolver, cases: list[MergeCase]) -> Report:
         if unit > 0:
             normalised.extend(e / unit for e in case_errors)
 
-    if not errors:
-        return Report(resolver.name, len(cases), 0, failures, 0, 0, 0, 0, 0, 0)
-
-    return Report(
-        resolver=resolver.name,
-        cases=len(cases),
-        boundaries=len(errors),
-        failures=failures,
-        mean=sum(errors) / len(errors),
-        median=median(errors),
-        p90=_percentile(errors, 0.90),
-        worst=max(errors),
-        mean_chars=sum(normalised) / len(normalised) if normalised else 0.0,
-        within_half_char=(
-            sum(1 for e in normalised if e <= 0.5) / len(normalised)
-            if normalised
-            else 0.0
-        ),
-    )
+    return errors, normalised, failures

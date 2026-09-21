@@ -36,30 +36,87 @@ def _xs(cut: object) -> list[int]:
     return [int(v) for v in cut]  # type: ignore[union-attr]
 
 
+def _page_width(alto: Path) -> int | None:
+    """The ALTO's own declared page width, when it has one."""
+    from lxml import etree
+
+    for el in etree.parse(str(alto)).iter():
+        if isinstance(el.tag, str) and etree.QName(el).localname == "Page":
+            raw = el.get("WIDTH")
+            return int(float(raw)) if raw else None
+    return None
+
+
+def _check_scale(
+    lines: list, img_width: int, scale: float, page_width: int | None
+) -> None:
+    """Refuse to decode when the declared scale contradicts the image.
+
+    The 37-GT-BNL ALTO are in tenths of a millimetre at 300 dpi, so their
+    coordinates are 254/300 of the pixels. Decoding them at scale 1 does not
+    fail: it crops 18% short, further off with every line down the page, and
+    returns text — plausible, never empty. That trap has already cost
+    saknussemm two full campaigns, twice, which is why this refuses instead
+    of warning.
+    """
+    # The reference is the ALTO's DECLARED page width when it has one. The
+    # first version of this guard compared against the rightmost line
+    # instead, and would have refused a perfectly scaled corpus at 1.247
+    # simply because no line reaches the page edge — a guard that cries
+    # wolf gets switched off, which is worse than no guard.
+    if page_width:
+        reference, what = page_width, "la largeur de page declaree"
+        tolerance = 0.02
+    else:
+        reference = max(ln.hpos + ln.width for ln in lines)
+        what = "l'etendue des lignes (la page ne declare pas de WIDTH)"
+        # Lines never reach both edges, so the implied ratio is an
+        # OVER-estimate here; only a gross mismatch is actionable.
+        tolerance = 0.30
+    implied = img_width / reference
+    if abs(implied - scale) > tolerance:
+        raise SystemExit(
+            f"ECHELLE INCOHERENTE : l'image fait {img_width} px, {what} vaut "
+            f"{reference}, soit un rapport de {implied:.3f} — or --scale vaut "
+            f"{scale:.3f}. 300/254 = 1.181 (dixiemes de mm a 300 dpi). "
+            "Rien n'a ete decode."
+        )
+
+
 def main() -> int:
     alto, image, out = (Path(a) for a in sys.argv[1:4])
+    scale = 1.0
+    argv = sys.argv[4:]
+    if "--scale" in argv:
+        scale = float(argv[argv.index("--scale") + 1])
 
     from kraken import rpred
     from kraken.containers import BaselineLine, Segmentation
     from kraken.lib.models import load_any
     from kraken.lib.util import open_image
 
-    model_path = sys.argv[4] if len(sys.argv) > 4 else _default_model()
+    model_path = _default_model()
     lines = read_lines(alto)
-    print(f"{alto.name}: {len(lines)} lignes", flush=True)
+    print(f"{alto.name}: {len(lines)} lignes, echelle {scale:.3f}", flush=True)
+
+    im = open_image(str(image))
+    _check_scale(lines, im.size[0], scale, _page_width(alto))
+
+    def sx(v: float) -> int:
+        return int(round(v * scale))
 
     bl = [
         BaselineLine(
             id=ln.line_id,
             baseline=[
-                (ln.hpos, ln.vpos + int(ln.height * 0.8)),
-                (ln.hpos + ln.width, ln.vpos + int(ln.height * 0.8)),
+                (sx(ln.hpos), sx(ln.vpos + ln.height * 0.8)),
+                (sx(ln.hpos + ln.width), sx(ln.vpos + ln.height * 0.8)),
             ],
             boundary=[
-                (ln.hpos, ln.vpos),
-                (ln.hpos + ln.width, ln.vpos),
-                (ln.hpos + ln.width, ln.vpos + ln.height),
-                (ln.hpos, ln.vpos + ln.height),
+                (sx(ln.hpos), sx(ln.vpos)),
+                (sx(ln.hpos + ln.width), sx(ln.vpos)),
+                (sx(ln.hpos + ln.width), sx(ln.vpos + ln.height)),
+                (sx(ln.hpos), sx(ln.vpos + ln.height)),
             ],
         )
         for ln in lines
@@ -74,7 +131,7 @@ def main() -> int:
 
     model = load_any(model_path)
     payload: dict[str, dict[str, object]] = {}
-    for rec, ln in zip(rpred.rpred(model, open_image(str(image)), seg), lines):
+    for rec, ln in zip(rpred.rpred(model, im, seg), lines):
         text = str(rec)
         cuts = list(rec.cuts)
         if len(cuts) != len(text):
@@ -82,7 +139,13 @@ def main() -> int:
             continue
         payload[ln.line_id] = {
             "text": text,
-            "spans": [[min(_xs(c)), max(_xs(c))] for c in cuts],
+            # back to ALTO units: the cache is always in the coordinate
+            # system the bench measures in, so no resolver needs to know
+            # that this corpus was ever scaled
+            "spans": [
+                [round(min(_xs(c)) / scale), round(max(_xs(c)) / scale)]
+                for c in cuts
+            ],
         }
 
     out.write_text(

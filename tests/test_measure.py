@@ -102,3 +102,27 @@ def test_a_gigantic_space_does_not_score_zero(alto_v4: Path) -> None:
     )
     errors = boundary_errors(sloppy, case)
     assert all(e > 50 for e in errors), errors
+
+
+def test_folding_preserves_length() -> None:
+    """One character out for one character in — the invariant positions rest on.
+
+    The matcher runs on folded text while positions are indexed in the
+    original, so any length change shifts every position after it, silently.
+    Folding the whole string at once did exactly that on 2026-09-21 and cost
+    the candidate 22 points on a corpus it had already got right.
+    """
+    from hans.cuts import _fold
+
+    for sample in (
+        "Chronique Locale",
+        "raisonnée",
+        "l'ouïe",
+        "ŒUVRE",
+        "İstanbul",
+        "ﬁn",
+        "á",
+        "",
+        "■nu ... i.l l-li. ■■",
+    ):
+        assert len(_fold(sample)) == len(sample), sample
