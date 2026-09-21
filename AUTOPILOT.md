@@ -472,3 +472,46 @@ résolveur par fichier et ne met en commun que les erreurs.
 `37-GT-BNL`. Ensuite `python -m hans.campaign campaigns/h1.json --strict`,
 qui appellera `verdict.decide`. **Le verdict n'est pas encore rendu** : il
 faut trois corpus et il n'y en a que deux de mesurés.
+
+### 2026-09-21 (suite 3) — H1 sort « confirmée », et la vérification trouve un bug
+
+Campagne complète, trois corpus, `--strict`, verdict calculé par
+`verdict.decide` :
+
+```
+BnF-bpt6k3265015q   au-dela 0.5car: 15,58% ->  0,22%  (cible  7,79%)  OK
+Gallica-pinned      au-dela 0.5car: 18,95% ->  0,06%  (cible  9,47%)  OK
+37-GT-BNL           au-dela 0.5car: 20,99% ->  5,38%  (cible 10,49%)  OK
+H1 CONFIRMEE -- 3/3 corpus, pire cas jamais aggravé.
+```
+
+**Et la règle 8 a payé une troisième fois.** Un chiffre détonnait :
+**145 lignes déclinées sur 509** pour `37-GT-BNL`, contre 4 sur 538 et 1 sur
+1174 ailleurs.
+
+Cause, trouvée en dessinant les crops (règle 10) : ils sont **parfaitement
+calés et parfaitement lisibles**, mais le modèle rend une chaîne **vide**.
+Le point commun de ces lignes est leur bord droit, à `x = 689` ou `690` pour
+une image large de 689. Corrélation mesurée sur tout le corpus :
+
+| | lue | vide |
+|---|---|---|
+| ligne entièrement dans l'image | **364** | 0 |
+| ligne touchant un bord | 0 | **145** |
+
+Partition parfaite. L'extracteur de polygone de kraken ne sait pas prendre un
+crop qui sort de l'image, et il ne le signale pas : il rend du vide.
+
+**Ce que ça faisait à la mesure.** Une lecture vide ne coûte aucune erreur —
+elle fait décliner le résolveur, qui rend la ligne au proportionnel. Donc sur
+**28 % de ce corpus**, la campagne mesurait la ligne de base tout en
+l'annonçant comme le candidat. Le score de `37-GT-BNL` était un mélange des
+deux, pas une mesure du CTC.
+
+Corrigé : les coordonnées mises à l'échelle sont bornées à l'image.
+Redécodage en cours, campagne à relancer. **Le verdict ci-dessus ne vaut
+rien tant qu'elle n'a pas retourné.**
+
+Noter la direction : le bug ne flattait pas le candidat, il le *diluait*.
+Le corriger va probablement renforcer le résultat — ce qui oblige à le
+regarder avec plus de méfiance encore, pas moins.

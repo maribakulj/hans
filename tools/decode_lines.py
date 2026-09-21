@@ -102,21 +102,35 @@ def main() -> int:
     im = open_image(str(image))
     _check_scale(lines, im.size[0], scale, _page_width(alto))
 
+
+    # Clamp into the image, or kraken silently returns an EMPTY read for
+    # the line. Measured on 37-GT-BNL, 2026-09-21: of 509 lines, the 364
+    # that fell wholly inside were all read and the 145 that touched an
+    # edge were ALL empty — a perfect split. The crops were legible; the
+    # polygon extractor simply cannot take one that leaves the image. An
+    # empty read costs no error, it just makes the resolver decline and
+    # hand the line back to the incumbent, so this was quietly measuring
+    # the baseline on 28% of that corpus and calling it the candidate.
+    img_w, img_h = im.size
+
     def sx(v: float) -> int:
-        return int(round(v * scale))
+        return max(0, min(img_w - 1, int(round(v * scale))))
+
+    def sy(v: float) -> int:
+        return max(0, min(img_h - 1, int(round(v * scale))))
 
     bl = [
         BaselineLine(
             id=ln.line_id,
             baseline=[
-                (sx(ln.hpos), sx(ln.vpos + ln.height * 0.8)),
-                (sx(ln.hpos + ln.width), sx(ln.vpos + ln.height * 0.8)),
+                (sx(ln.hpos), sy(ln.vpos + ln.height * 0.8)),
+                (sx(ln.hpos + ln.width), sy(ln.vpos + ln.height * 0.8)),
             ],
             boundary=[
-                (sx(ln.hpos), sx(ln.vpos)),
-                (sx(ln.hpos + ln.width), sx(ln.vpos)),
-                (sx(ln.hpos + ln.width), sx(ln.vpos + ln.height)),
-                (sx(ln.hpos), sx(ln.vpos + ln.height)),
+                (sx(ln.hpos), sy(ln.vpos)),
+                (sx(ln.hpos + ln.width), sy(ln.vpos)),
+                (sx(ln.hpos + ln.width), sy(ln.vpos + ln.height)),
+                (sx(ln.hpos), sy(ln.vpos + ln.height)),
             ],
         )
         for ln in lines
