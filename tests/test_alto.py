@@ -34,3 +34,26 @@ def test_a_string_without_geometry_disqualifies_its_line(alto_v4: Path) -> None:
     whoever measures it.
     """
     assert all(line.line_id != "L3" for line in read_lines(alto_v4))
+
+
+def test_mojibake_is_repaired(tmp_path: Path) -> None:
+    """A UTF-8 payload behind a Latin-1 declaration would bias the campaign.
+
+    The proportional resolver never reads the text, so corrupted CONTENT
+    costs it nothing. A pixel resolver reads the page correctly and would
+    be scored on failing to match a corrupted target — losing for being
+    right. The pinned Gallica ALTO are exactly this case.
+    """
+    from hans.alto import repair_mojibake
+
+    assert repair_mojibake("raisonnÃ©e") == "raisonnée"
+    assert repair_mojibake("l'ouÃ¯e") == "l'ouïe"
+
+
+def test_text_without_the_signature_is_left_alone() -> None:
+    """No marker, no touching — and a failed round-trip changes nothing."""
+    from hans.alto import repair_mojibake
+
+    assert repair_mojibake("déjà") == "déjà"
+    assert repair_mojibake("plain ascii") == "plain ascii"
+    assert repair_mojibake("Ãé") == "Ãé"

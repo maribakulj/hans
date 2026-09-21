@@ -47,6 +47,34 @@ def _local(el: etree._Element) -> str:
     return str(etree.QName(el).localname)
 
 
+#: Sequences that only appear when UTF-8 bytes were decoded as Latin-1.
+#: "é" (0xC3 0xA9) read as Latin-1 becomes "Ã©", so a lone "Ã" or "Â" before
+#: another non-ASCII character is the signature.
+_MOJIBAKE_MARKERS = ("\u00c3", "\u00c2")
+
+
+def repair_mojibake(text: str) -> str:
+    """Undo a UTF-8 payload that was read through a Latin-1 declaration.
+
+    The pinned Gallica ALTO declare ``encoding="ISO-8859-1"`` and hold UTF-8,
+    so a conforming parser hands back "raisonnÃ©e" for "raisonnée". Left
+    alone this does not merely look wrong -- it would BIAS the campaign. The
+    proportional resolver never looks at the text, so mojibake costs it
+    nothing; a pixel resolver reads the page correctly and would then be
+    scored on its failure to match a corrupted target. The candidate would
+    lose for being right.
+
+    Repaired only when the telltale sequence is present AND the round-trip
+    is lossless, so text that is genuinely about "Ãland" survives.
+    """
+    if not any(m in text for m in _MOJIBAKE_MARKERS):
+        return text
+    try:
+        return text.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return text
+
+
 def _int(el: etree._Element, name: str) -> int | None:
     raw = el.get(name)
     if raw is None:
@@ -86,7 +114,7 @@ def read_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLine]:
             if hpos is None or width is None or not content or width <= 0:
                 broken = True
                 break
-            words.append(WordBox(text=content, hpos=hpos, width=width))
+            words.append(WordBox(text=repair_mojibake(content), hpos=hpos, width=width))
 
         if broken or len(words) < min_words:
             continue

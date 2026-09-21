@@ -49,11 +49,26 @@ def interval_distance(a: tuple[float, float], b: tuple[float, float]) -> float:
 def boundary_errors(boxes: tuple[WordBox, ...], case: MergeCase) -> list[float]:
     """One error per internal boundary, in the case's own coordinate unit.
 
-    The predicted boundary is read off the SPACE token's box, not off the
-    word edges: the space is what the rewriter turns into an ``SP`` element,
-    and its span IS the resolver's answer to "where does one word stop and
-    the next begin". A resolver that returns no space token is scored on the
-    point where the two word boxes meet instead.
+    The prediction is scored as the MIDPOINT of the space token's box, not
+    as the interval it spans. That distinction was paid for on 2026-09-21:
+    scored interval-against-interval, the CTC resolver returned 100.0% of
+    boundaries correct, on every case, with zero error -- a perfect score,
+    which is almost never a result. Its space boxes are twice as wide as the
+    true blanks (median 36px against 17px) because CTC cuts hug the ink
+    while ALTO boxes keep a margin, so the predicted interval CONTAINED the
+    true one every single time and "they overlap" was free. The metric was
+    rewarding imprecision: a resolver returning one space as wide as the
+    line would have scored 100%.
+
+    A midpoint cannot be widened into a better score. A wide box still
+    scores zero when it is centred on the blank, which is right -- the
+    resolver did locate the boundary -- and is penalised as soon as it is
+    off-centre, which the interval version could not see.
+
+    The success criterion for H1 is untouched by this: it is stated as a
+    RULE over the baseline ("halve the share beyond 0.5 char"), not as
+    numbers, so re-measuring both sides re-derives the targets. That is why
+    it was frozen as a rule.
     """
     if len(boxes) != len(case.tokens):
         raise ValueError(
@@ -64,12 +79,10 @@ def boundary_errors(boxes: tuple[WordBox, ...], case: MergeCase) -> list[float]:
     for k, (start, end) in enumerate(case.gaps):
         # tokens alternate word, space, word, ... so boundary k is token 2k+1
         space = boxes[2 * k + 1]
-        predicted = (
-            (float(space.hpos), float(space.right))
-            if space.width > 0
-            else (float(space.hpos), float(space.hpos))
+        midpoint = (space.hpos + space.right) / 2
+        errors.append(
+            interval_distance((midpoint, midpoint), (float(start), float(end)))
         )
-        errors.append(interval_distance(predicted, (float(start), float(end))))
 
     return errors
 

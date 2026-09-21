@@ -79,3 +79,26 @@ def test_perfect_beats_proportional_on_the_report(alto_v4: Path) -> None:
     assert case is not None
     assert score(_Perfect(_truth(case)), [case]).mean == 0.0
     assert score(ProportionalResolver(), [case]).failures == 0
+
+
+def test_a_gigantic_space_does_not_score_zero(alto_v4: Path) -> None:
+    """The flaw this bench had on 2026-09-21, pinned so it cannot return.
+
+    Scored interval-against-interval, a resolver whose space box merely
+    CONTAINS the true blank scored zero — so the wider the guess, the better
+    the score, and a space as wide as the line scored perfectly. Scoring the
+    midpoint removes the incentive: here the line is 100..400 and the true
+    blanks are at 118..124 and 141..147, so a single enormous space centred
+    at 250 must be charged for it.
+    """
+    case = line_case(read_lines(alto_v4)[0])
+    assert case is not None
+    sloppy = (
+        WordBox("de", 100, 1),
+        WordBox(" ", 101, 298),
+        WordBox("la", 399, 1),
+        WordBox(" ", 100, 299),
+        WordBox("Republique", 399, 1),
+    )
+    errors = boundary_errors(sloppy, case)
+    assert all(e > 50 for e in errors), errors

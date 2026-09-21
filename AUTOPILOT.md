@@ -380,4 +380,51 @@ multiprocessing. Sans garde `if __name__ == "__main__":` chaque worker
 réexécute le script entier et la machine part en boucle de spawn. Le
 résolveur doit être import-safe.
 
-**En cours** : écrire `CTCCutsResolver` sur ce principe et le mesurer.
+**`CTCCutsResolver` écrit et mesuré sur un corpus.** Cache de découpes
+produit hors de `hans` (`tools/decode_lines.py`, lancé par le venv kraken) et
+lu par un résolveur en Python pur : la CI reste installable sans les 2 Go de
+torch, et la campagne devient auditable — le texte lu est sur le disque à
+côté des chiffres qu'il a produits.
+
+**Et le banc m'a menti une deuxième fois, dans l'autre sens.**
+Premier score du CTC : **100,0 % des frontières correctes, erreur nulle,
+partout**. Un score parfait n'est presque jamais un résultat.
+
+Cause, trouvée en regardant les largeurs : les découpes CTC épousent l'encre
+tandis que les boîtes ALTO gardent une marge, donc le blanc *prédit* fait le
+double du vrai (36 px contre 17 en médiane) et le **contient** à chaque fois.
+Comparer intervalle contre intervalle rendait « ils se chevauchent »
+gratuit : **la métrique récompensait l'imprécision**, et un résolveur rendant
+un blanc large comme la ligne aurait obtenu 100 %.
+
+Corrigé : la prédiction est notée sur le **point médian** du blanc, pas sur
+son étendue. Un blanc large centré sur la coupe vaut toujours zéro — le
+résolveur a bien localisé la frontière — mais il est pénalisé dès qu'il est
+décentré, ce que la version par intervalles ne pouvait pas voir.
+`test_a_gigantic_space_does_not_score_zero` épingle le défaut.
+
+**Le critère de H1 n'a pas bougé** : il est énoncé comme une *règle* sur la
+ligne de base (« réduire de moitié »), pas comme des nombres, donc remesurer
+les deux côtés redérive les cibles. C'est précisément pour ça qu'il a été
+gelé sous forme de règle.
+
+**Mesure, métrique corrigée, `bpt6k2206225` p.15 — 194 frontières :**
+
+| résolveur | ≤ 0,5 car. | moyenne | pire |
+|---|---|---|---|
+| proportionnel | 83,0 % | 0,20 car. | 34 px |
+| **CTC** | **100,0 %** | 0,00 car. | 1,5 px |
+
+**Règle 10 appliquée : le crop a été dessiné et regardé**
+(`/tmp/check_boundaries.png`). Le crop tombe sur le bon texte — donc pas de
+décalage d'échelle —, les blancs vrais sont là où le banc les place, les
+marques CTC tombent dedans et les marques proportionnelles dérivent de plus
+en plus en avançant dans la ligne. Ce que les chiffres disaient, l'image le
+montre.
+
+**Ce n'est pas H1.** Une page, un corpus. Le critère en exige trois.
+
+**Prochain obstacle, connu d'avance** : `37-GT-BNL` est en dixièmes de
+millimètre (facteur `300/254`). Décoder ses lignes sans transformation
+donnerait des crops décalés de 18 %, plausibles et jamais vides. À traiter
+explicitement avant toute mesure sur ce corpus.
