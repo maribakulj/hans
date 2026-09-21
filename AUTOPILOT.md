@@ -20,6 +20,26 @@ réussir ne s'arrête jamais.
 
 ---
 
+## Décisions du mainteneur — 2026-09-21
+
+Prises explicitement, contre mon avis sur les deux dernières. Elles sont
+déléguées : la boucle les applique sans les rouvrir.
+
+1. **Le dépôt distant est `maribakulj/hans`, privé.** La boucle y pousse.
+2. **La boucle va jusqu'au verdict de H1 inclus.** J'avais recommandé de
+   s'arrêter avant : un verdict n'a pas de juge externe. Contre-mesure posée
+   en conséquence — `src/hans/verdict.py` calcule le verdict à partir du
+   critère gelé, et `test_verdict.py` épingle ce critère sur le texte de ce
+   fichier. Déclarer H1 est devenu une opération arithmétique, pas une
+   interprétation. **Le critère ne se renégocie pas au moment de mesurer.**
+3. **La boucle choisit seule le troisième corpus.** J'avais recommandé de
+   préparer des candidats. En contrepartie, la règle 3 s'applique avec
+   sévérité : représentativité vérifiée AVANT de mesurer, fiche écrite au
+   journal, et la règle 9 (le corpus porte-t-il l'ENTRÉE ou la réponse ?)
+   vérifiée explicitement et écrite.
+
+---
+
 ## Le contrat de boucle
 
 **L'unité de travail est le geste ; « vert » est la condition de sortie de
@@ -124,6 +144,18 @@ La boucle s'arrête — et écrit pourquoi au journal — dès que l'une est vra
 
 ## La file
 
+### 0. Tests des branches neuves de `G0` — **en tête**
+
+`_geometry_is_usable` et `_resolve_geometry` (saknussemm,
+`formats/alto/rewriter.py`) n'ont **aucun test**. La suite est verte parce
+que le chemin par défaut est inchangé ; les branches neuves ne sont
+exercées par rien. À couvrir : compte de tokens faux, texte qui ne
+correspond pas, largeur nulle, chevauchement, débordement de la boîte,
+résolveur qui lève — et le cas nominal, où un résolveur valide passe.
+
+**Fini quand** : chaque branche de `_geometry_is_usable` a un test qui
+échoue si on la retire.
+
 ### 1. `G0` — la couture dans saknussemm
 
 Exposer `WordGeometryResolver` dans `saknussemm/core/protocols.py`, avec le
@@ -137,8 +169,17 @@ identique à l'octet près quand aucun résolveur n'est fourni. Les tests
 `test_internal_seams_are_named.py` vont réagir : c'est attendu, pas une
 panne.
 
-**Fini quand** : la suite de saknussemm est verte, `I4` tient, et `hans`
-importe le Protocol au lieu de le redéfinir.
+**Fait le 2026-09-21** pour la couture elle-même (commit `11471e2`) :
+Protocol, `_geometry_is_usable`, `_resolve_geometry`, 1792 tests verts,
+`I4` intact, zéro dépendance.
+
+**Reste — et c'est un arbitrage du mainteneur, pas de la boucle** :
+`rewrite_alto_file` ne reçoit pas encore le résolveur. Deux paramètres de
+plus la font passer de 161 à 166 lignes, et `test_orchestrator_budget` la
+tient à « ne peut que rétrécir ». Le garde-fou a raison — la fonction est
+déjà trop grosse — et la règle 5 de saknussemm interdit de découper ce
+fichier. Relever l'épingle est une décision de conception. **La boucle ne la
+prend pas.** H1 n'en dépend pas : le banc n'appelle pas `rewrite_alto_file`.
 
 ### 2. `H1` — le CTC bat-il le proportionnel ? **← le jalon qui décide**
 
