@@ -67,12 +67,19 @@ python -m hans.bench chemin/vers/page.xml
 
 | | Jalon | État |
 |---|---|---|
-| G0 | La couture `WordGeometryResolver` dans saknussemm | en cours |
+| G0 | La couture `WordGeometryResolver` dans saknussemm | fait (un fil reste, arbitrage mainteneur) |
 | G1 | **Le juge** — banc, corruption mécanique, ligne de base | fait |
-| H1 | CTC vs proportionnel, ≥ 3 corpus | à mesurer |
-| G2 | `CTCForcedAlignmentResolver` | bloqué par H1 |
-| G3 | `alignment_confidence` (preuve visuelle) | bloqué par H1 |
-| G4 | Bout en bout, câblé via `saknussemm-demo` | bloqué par G2 |
+| H1 | CTC vs proportionnel, 3 corpus | **tranchée : RÉFUTÉE** — voir [docs/H1.md](docs/H1.md) |
+| G2 | `CTCCutsResolver` | écrit et mesuré |
+| G3 | `alignment_confidence` | clos sans être fait (contrat : H1 réfutée) |
+| G4 | Bout en bout | clos sans être fait (contrat : H1 réfutée) |
+
+**En une phrase** : le CTC fait passer la part des frontières mal placées de
+~16-21 % à moins de 1 % sur les trois corpus — mais il aggrave le pire cas
+sur l'un d'eux, ce que le critère interdit. La cause est identifiée et
+étroite : un recognizer d'imprimé français est hors domaine sur les lignes
+en Fraktur d'un corpus luxembourgeois, et il produit là une géométrie
+confiante et fausse.
 
 ## Licence
 

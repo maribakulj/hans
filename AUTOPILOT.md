@@ -207,7 +207,7 @@ Donc la cible est : **≥ 96,3 %** sur BnF, **≥ 93,7 %** sur 37-GT-BNL.
 réfutée, `G2`/`G3`/`G4` sont clos sans être faits, et le dépôt devient le
 compte rendu d'une réfutation — ce qui est un résultat.
 
-### 3. `G2` — `CTCForcedAlignmentResolver` — **bloqué par H1**
+### ~~3. `G2`~~ — **fait** sous la forme `CTCCutsResolver`
 
 `kraken.align.forced_align` existe déjà et rend, par caractère, un couple
 `(début, fin)` **déjà remis à l'échelle de l'image** plus une confiance
@@ -218,14 +218,14 @@ H1 : il y a un appel à câbler.
 restent-elles informatives sur du français ancien (ſ long, ligatures) ? Si
 elles ne le sont pas, l'alignement dérive **silencieusement**.
 
-### 4. `G3` — `alignment_confidence` — **bloqué par H1**
+### ~~4. `G3`~~ — **clos sans être fait** (contrat : H1 réfutée)
 
 Le rapport vraisemblance du chemin forcé / décodage libre. **Pas** un verdict
 « unmatched » : un alignement forcé trouve toujours *un* chemin, quitte à
 écraser un mot dans deux frames. Le signal est un score bas, pas un échec
 d'appariement.
 
-### 5. `G4` — bout en bout — **bloqué par G2**
+### ~~5. `G4`~~ — **clos sans être fait** (contrat : H1 réfutée)
 
 ---
 
@@ -244,6 +244,13 @@ Hors de portée de la boucle, et ce n'est pas un problème à contourner :
 - **La géométrie verticale.** Tout ici est horizontal. Un polygone par mot
   demande un masque d'encre (§9 du récapitulatif) et c'est un jalon qui
   n'existe pas encore. **C** — ne pas l'ouvrir sans arbitrage.
+- **Un seuil de support plus strict, ou un routage par écriture.** H1 échoue
+  sur deux frontières d'une ligne en Fraktur que le seuil de 0,5 laisse
+  passer. Relever ce seuil *maintenant*, après avoir vu quelles lignes
+  échouent, serait exactement l'ajustement que ce dépôt existe pour
+  empêcher : ce serait une hypothèse neuve (H2), à geler avant de mesurer, et
+  de préférence sur un quatrième corpus jamais regardé. **C** — arbitrage du
+  mainteneur.
 - **La césure.** Une fusion `N→1` à cheval sur deux `TextLine` ne peut pas
   être l'union de deux boîtes : ALTO a `SUBS_TYPE="HypPart1/HypPart2"` pour
   ça, et saknussemm a déjà `core/hyphenation.py`. Le banc ne fabrique aucun
@@ -515,3 +522,32 @@ rien tant qu'elle n'a pas retourné.**
 Noter la direction : le bug ne flattait pas le candidat, il le *diluait*.
 Le corriger va probablement renforcer le résultat — ce qui oblige à le
 regarder avec plus de méfiance encore, pas moins.
+
+### 2026-09-21 (suite 4) — H1 tranchée : RÉFUTÉE. La boucle s'arrête.
+
+Caches corrigés, campagne relancée. Le bornage des crops a fait tomber
+`37-GT-BNL` de 5,38 % à **0,62 %** de frontières au-delà du demi-caractère —
+mais il a découvert le pire cas que le repli masquait : **146 px contre 84**
+pour la ligne de base.
+
+```
+H1 REFUTEE -- le pire cas est aggrave sur 37-GT-BNL : le critere
+l'interdit sur tout corpus, quel que soit le gain moyen.
+```
+
+**Avant la correction du bug, H1 sortait CONFIRMÉE.** C'est en réparant une
+dilution qui *desservait* le candidat qu'on a découvert qu'il échouait. Le
+verdict-en-code a fait exactement ce pour quoi il a été écrit : il n'a pas
+laissé « la précision a été multipliée par dix » emporter la décision.
+
+Cause identifiée et étroite : deux frontières, une seule ligne, en **allemand
+composé en Fraktur**. `CATMuS-Print` est un modèle d'imprimé français, hors
+domaine sur du Fraktur ; `37-GT-BNL` est luxembourgeois donc bilingue. 22
+lignes passent avec un support entre 0,5 et 0,7 — toutes allemandes — et le
+seuil de 0,5 ne les arrête pas.
+
+Rapport complet : `docs/H1.md`.
+
+**La boucle s'arrête** — condition d'arrêt « H1 est tranchée », prévue au
+contrat. `G3` et `G4` sont clos sans être faits, comme le contrat le prévoit
+aussi en cas de réfutation.
