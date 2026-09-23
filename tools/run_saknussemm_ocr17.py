@@ -32,10 +32,14 @@ from saknussemm import (
     load,
 )
 from saknussemm.core.schemas import ModelCapabilities
+from saknussemm.integrations.llm import CORPUS_NOTE_EARLY_MODERN_FRENCH, with_corpus_notes
 from saknussemm.integrations.page import PAGE_SYSTEM_PROMPT
 from saknussemm.producers.page_llm import PageLLMEditProducer
 from saknussemm.producers.vision import (
+    COMPOSITE_VISION_SYSTEM_PROMPT,
+    PAGE_VISION_SYSTEM_PROMPT,
     CompositeVisionEditProducer,
+    PageVisionEditProducer,
     VisionEditProducer,
     build_image_asset,
 )
@@ -124,6 +128,9 @@ def _arms(key: str) -> dict[str, dict[str, Any]]:
     vlm = MistralMultimodalProvider()
     txt = MistralProvider()
     planner20 = ChunkPlannerConfig(max_lines_per_request=20, line_window_size=20)
+    planner20c = ChunkPlannerConfig(
+        max_lines_per_request=20, line_window_size=20, coalesce_blocks=True
+    )
     return {
         "vision-lines·vision()": dict(
             # Comme la démo : sans max_images déclaré, le batcher ne découpe
@@ -148,10 +155,59 @@ def _arms(key: str) -> dict[str, dict[str, Any]]:
             guard=GuardConfig(attachment_scope="page"),
             planner=planner20,
         ),
+        "composite·page·regroupé": dict(
+            producer=CompositeVisionEditProducer(vlm, key, MODEL, max_lines=20),
+            guard=GuardConfig(attachment_scope="page"),
+            planner=planner20c,
+        ),
         "composite·page·jumelles": dict(
             producer=CompositeVisionEditProducer(vlm, key, MODEL, max_lines=20),
             guard=GuardConfig(attachment_scope="page", attachment_twin_similarity=0.85),
             planner=planner20,
+        ),
+        "page-vision·adjacent": dict(
+            producer=PageVisionEditProducer(vlm, key, MODEL),
+            guard=GuardConfig(),
+            planner=None,
+        ),
+        "page-vision·page": dict(
+            producer=PageVisionEditProducer(vlm, key, MODEL),
+            guard=GuardConfig(attachment_scope="page"),
+            planner=None,
+        ),
+        "page-vision·vision()": dict(
+            producer=PageVisionEditProducer(vlm, key, MODEL),
+            guard=GuardConfig.vision(),
+            planner=None,
+        ),
+        "page-vision·vision(page)": dict(
+            producer=PageVisionEditProducer(vlm, key, MODEL),
+            guard=GuardConfig.vision(attachment_scope="page"),
+            planner=None,
+        ),
+        "page-vision·note·vision(page)": dict(
+            producer=PageVisionEditProducer(
+                vlm, key, MODEL,
+                system_prompt=with_corpus_notes(PAGE_VISION_SYSTEM_PROMPT, CORPUS_NOTE_EARLY_MODERN_FRENCH),
+            ),
+            guard=GuardConfig.vision(attachment_scope="page"),
+            planner=None,
+        ),
+        "page-vision·note·page": dict(
+            producer=PageVisionEditProducer(
+                vlm, key, MODEL,
+                system_prompt=with_corpus_notes(PAGE_VISION_SYSTEM_PROMPT, CORPUS_NOTE_EARLY_MODERN_FRENCH),
+            ),
+            guard=GuardConfig(attachment_scope="page"),
+            planner=None,
+        ),
+        "composite·note·page·regroupé": dict(
+            producer=CompositeVisionEditProducer(
+                vlm, key, MODEL, max_lines=20,
+                system_prompt=with_corpus_notes(COMPOSITE_VISION_SYSTEM_PROMPT, CORPUS_NOTE_EARLY_MODERN_FRENCH),
+            ),
+            guard=GuardConfig(attachment_scope="page"),
+            planner=planner20c,
         ),
         "page-aligned·jaccard·prompt17": dict(
             producer=PageLLMEditProducer(
@@ -234,6 +290,10 @@ async def _run_arm(name: str, arm: dict[str, Any]) -> dict[str, Any]:
             "fallback_lines": result.fallback_lines, "review_lines": result.review_lines,
             "fallback_reasons": dict(result.fallback_reasons), "events": rec.counts(),
             "texts": {k: [src[k], got.get(k, src[k]), ref[k]] for k in ids},
+            "decisions": {
+                o.line_id: [o.decision.status, o.decision.reason.code if o.decision.reason else None]
+                for o in result.report.lines
+            },
         }
         print(
             f"  {d.name[:28]:<30} CER {pEs/pL:>6.2%} → {pE/pL:>6.2%}  chunks={result.total_chunks} "

@@ -849,3 +849,16 @@ Run : zéro ligne mal rattachée sur six bras ; recadrage par ligne 6,74 %
 prompt générique **10,96 %, pire que rien** (modernise le XVIIe), prompt
 XVIIe 6,71 %. Le gain « page entière » (4,58 %) n'a pas de producteur dans
 saknussemm. Rapport `docs/H16.md`.
+
+### 2026-09-24 — règle 12 : un `| tail` masque le code de sortie de pytest
+
+Le commit `ef9480b` de saknussemm a été poussé rouge (31 échecs) parce que
+la commande de gate était `pytest … | tail -1 && git commit` : le code de
+sortie était celui de `tail`. **Règle 12** : toute commande de gate qui
+enchaîne sur un commit commence par `set -o pipefail`, ou lit pytest sans
+tuyau. Réparé au commit suivant (`58b0f4f`), après classement du diff.
+
+Boucle VR (PR #166) : VR-1 page entière, VR-2 regroupement des régions,
+VR-3 plafond d'images lu sur le client, VR-4 notes de corpus, VR-5
+séparateurs — faits ; VR-6, VR-7 mesurés. Run de vérification VR-4 en
+vision en cours.
