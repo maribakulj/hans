@@ -767,3 +767,15 @@ sans veto) parce qu'il *place*. Sensibilité : un saut moins cher aide
 veto, égal à H14. Les identifiants peints restent devant (7,37 %). D
 mérite de remplacer `characters` là où celui-ci marche ; il ne rend pas
 l'identité perdue.
+
+### 2026-09-23 — H13 §2.7 : à 30 % de CER, les boîtes sont fausses aussi
+
+Biais déclaré : les campagnes NewsEye utilisent les boîtes VT. Mesuré la
+segmentation propre de Tesseract contre la VT : sur les deux pages à plus
+de 24 % de CER, 35 % et 54 % des lignes retrouvées, 26 % et 51 % coupées ou
+fusionnées ; sur les pages sous 6 %, 94–98 % à IoU 0,9. Texte et
+géométrie tombent ensemble. Les gains de §2.4 sur ces pages sont
+optimistes. La post-correction a un domaine : CER source sous 10–15 % ;
+au-dessus de 25–30 %, c'est de l'OCR, hors périmètre de saknussemm.
+Campagne « transcription seule » en cours pour chiffrer ce que le texte
+source apporte, tranche par tranche.
