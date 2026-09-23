@@ -819,3 +819,16 @@ que gallica.bnf.fr coupe. Pas d'OCR dans cette API (manifeste sans
 seeAlso par canvas, URL devinées → 404) : l'ALTO reste sur
 RequestDigitalElement, qui rend 500 sur Corneille f79. `tools/bnf_api.py`
 lit les identifiants dans le trousseau — jamais dans le dépôt.
+
+### 2026-09-23 — l'OCR est sur `openapiproext.bnf.fr`, filtré par IP ; OCR17+ n'a pas d'OCR sur Gallica
+
+Second mail : les manifestes de `openapiproext.bnf.fr` portent un
+`seeAlso` ALTOXML par page. Depuis ici, l'hôte résout mais ne répond ni
+en 443 ni en 80 : filtrage IP, à faire ouvrir. Gallica classique rouvert
+(≥ 12 s entre requêtes). Découverte qui ferme une piste : les six
+documents OCR17+ présents sur Gallica ont `nqamoyen = 0.0` et
+`hasContent = false` — **aucun OCR de production**. La mesure « OCR
+Gallica contre VT » sur le cœur de cible est impossible sur ce corpus,
+et c'est une information d'éligibilité en soi : une part du XVIIe sur
+Gallica n'est pas OCRisée du tout — là, c'est de l'OCR, pas de la
+post-correction.
