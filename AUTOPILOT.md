@@ -747,3 +747,13 @@ par deux (182 → 84 sans veto), CER 8,03 % → **7,37 %** sous veto, **zéro**
 résiduelle. Le bras lignes nues ne garde pas le compte à 20 non plus
 (218/280 blocs). Blocs de 10 en cours ; résultats copiés dans
 `~/corpus-vt/resultats/` pour survivre à un redémarrage.
+
+### 2026-09-23 — H13 §2.6 : blocs de 10 lignes ; le balayage est clos
+
+Identifiants peints, 40/20/10 lignes : dérive 182/84/29, CER sous veto
+8,03/7,37/7,27 %, zéro résiduelle dès 20. Plafond atteint à 20 ; l'écart
+sans veto/veto grandit (1,45 point à 10) — ce qui reste refusé est le
+prix du zéro, pas de la dérive. Lignes nues : 389/537 blocs sans le bon
+compte à 10 lignes. Prochaine expérience proposée : D, un DP global avec
+transitions explicites (saut dans le flux, fusion, coupure) et prior de
+largeur — en attente du mainteneur.
