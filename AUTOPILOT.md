@@ -673,3 +673,19 @@ reste sous `I4`.
 
 Deux items de type **C** en questions ouvertes ; rien de plus à faire sans
 arbitrage.
+
+### 2026-09-23 — H12 §6 : comparé contre la VT, le zéro tient et coûte 0,5 point
+
+9 pages d'OCR17+, `medium`. H12 (image + ID dans le flux + veto) : **CER
+4,58 %, zéro ligne mal rattachée vérifiée contre la VT**, contre 8,55 % sans
+rien faire. À égalité avec le recollage au caractère sous le même veto
+(4,61 %), mais sans perdre une ligne là où la page nue en perdait 10. Les
+systèmes sans veto qui infèrent l'identité ont laissé passer 2 (Jaccard) et
+1 (small opaque) lignes ; le veto les refuse toutes.
+
+Les 12 refus sont 12 bonnes corrections perdues, toutes des lignes jumelles
+(noms de personnages, vers répétés). Une exemption de principe — la marge
+n'est exigée que contre des voisines distinguables — rend la moitié du prix
+(CER 4,31 %) en gardant zéro sur les trois jeux. Dessinée après avoir vu les
+échecs : option mesurée, pas défaut, jusqu'à confirmation sur un corpus
+neuf.
