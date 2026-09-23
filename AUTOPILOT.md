@@ -832,3 +832,20 @@ Gallica contre VT » sur le cœur de cible est impossible sur ce corpus,
 et c'est une information d'éligibilité en soi : une part du XVIIe sur
 Gallica n'est pas OCRisée du tout — là, c'est de l'OCR, pas de la
 post-correction.
+
+### 2026-09-24 — H16 : OCR17+ à travers saknussemm (PR #166), six bras
+
+Implémenté sur la branche : `GuardConfig(attachment_scope="page")` (garde
+2 étendu à la page, code `closer_to_another_line`),
+`attachment_twin_similarity`, `CompositeVisionEditProducer` (bande
+recadrée, alias peints, rangées bornées via `max_images`), doc de
+`characters`, et un correctif trouvé par le run (séparateur de ligne dans
+une ligne rendue → page épuisée). 1 943 tests, 30 empreintes classées
+TextLine par TextLine (provenance seule).
+
+Run : zéro ligne mal rattachée sur six bras ; recadrage par ligne 6,74 %
+(mes scripts 6,4 %, l'écart = replis de césure) ; composite 6,25 % mais
+105 chunks (le planificateur BLOCK suit les régions PAGE) ; `page_aligned`
+prompt générique **10,96 %, pire que rien** (modernise le XVIIe), prompt
+XVIIe 6,71 %. Le gain « page entière » (4,58 %) n'a pas de producteur dans
+saknussemm. Rapport `docs/H16.md`.
