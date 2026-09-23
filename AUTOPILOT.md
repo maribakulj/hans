@@ -689,3 +689,19 @@ n'est exigée que contre des voisines distinguables — rend la moitié du prix
 (CER 4,31 %) en gardant zéro sur les trois jeux. Dessinée après avoir vu les
 échecs : option mesurée, pas défaut, jusqu'à confirmation sur un corpus
 neuf.
+
+### 2026-09-23 — H13 §1 : le zéro sur de l'OCR réel (HIPE, 1 824 lignes, 30 titres)
+
+HIPE-OCRepair 2026, `impresso-snippets` fr, texte seul, `medium`. H12 avec
+veto : **CER 3,83 % → 2,36 %, zéro ligne mal rattachée contre la VT**, 14
+refus sur 738 changements. Le Jaccard nu en laisse passer **8** — quatre
+fois plus que sur OCR17+ : les lignes de presse se ressemblent. Le zéro
+tient à tous les niveaux de bruit réel (jusqu'à 14 %).
+
+Deux faux positifs du contrôle automatique inspectés : une espace insérée
+avant un mot dont la VT est en capitales (contrôle sensible à la casse — à
+corriger), et une hallucination sur un titre en bouillie que le veto
+refuse. Aucun des deux n'est un rattachement.
+
+NewsEye (8 pages BnF, 5 493 lignes, images) : Tesseract en cours pour
+l'OCR source ; campagne vision H12 ensuite.
