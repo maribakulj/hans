@@ -728,3 +728,14 @@ rattachée, CER inchangé — sûr, pas rentable.
 Trois lanceurs refusés avant envoi (découpages) et un tué par la mémoire
 (8 pages pleine résolution en cache) ; corrigé : image ouverte par bloc,
 sauvegarde incrémentale, reprise.
+
+### 2026-09-23 — H14 : recouper un paragraphe brut — texte, décompte, pixels
+
+Question du mainteneur : reconstruire les lignes depuis un paragraphe
+brut, par décompte de mots ou par le CTC. Mesuré sur NewsEye (5 111
+lignes, CTC de toutes les lignes). Décompte de mots : 85 % de CER,
+mort-né. Pixels > texte OCR comme référence, surtout sous bruit (30,8 %
+contre 37,6 % à 20–50 %). Référence « tout ce qui est visible dans le
+recadrage » : −11 points sans veto, **9,70 %** sous veto — mais toujours
+derrière les identifiants peints (8,03 %) : recouper après coup vaut
+moins qu'empêcher la dérive. Le CTC reste en secours et en géométrie.
