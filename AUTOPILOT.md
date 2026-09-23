@@ -256,6 +256,14 @@ Hors de portée de la boucle, et ce n'est pas un problème à contourner :
 
 ## Questions ouvertes
 
+- **Séparer plausibilité et attachement.** `min_source_similarity` répond
+  aux deux avec un seul nombre, et le profil vision perd l'attachement en
+  baissant le seuil pour la plausibilité. La sortie mesurée (H11 §2) est une
+  autre *preuve*, pas un autre seuil : les pixels de la ligne, dont le
+  pouvoir de séparation ne dépend pas de la qualité de l'OCR. Cela demande
+  un garde d'attachement distinct dans saknussemm — extension de surface
+  publique, donc `CHANGELOG`, `docs/versioning.md` et les deux tests de
+  surface dans le même commit. **C** — arbitrage du mainteneur.
 - **La géométrie verticale.** Tout ici est horizontal. Un polygone par mot
   demande un masque d'encre (§9 du récapitulatif) et c'est un jalon qui
   n'existe pas encore. **C** — ne pas l'ouvrir sans arbitrage.
@@ -609,3 +617,36 @@ Campagne relancée : verdict identique, **H1 réfutée**. Reproductible.
 que l'épingle de budget de `rewrite_alto_file`, H2 (type **C**), et la PR de
 la branche saknussemm. La boucle s'arrête sur « l'item suivant exige une
 décision humaine ».
+
+## 2026-09-23 — H11 : le réordonnancement n'existe pas, et les pixels savent apparier
+
+Deux questions ouvertes par H10, fermées par la mesure. Rapport : `docs/H11.md`.
+
+**Le cas manquant était nommé dans H10** : ses neuf pages sont en une seule
+colonne, donc l'hypothèse de monotonie du recollage au caractère n'avait
+jamais été testée là où elle est fragile. *Le Temps*, 5 janvier 1890, six
+colonnes. Une lecture en trame produirait 41 % d'inversions. Mesuré :
+**0,03 % (medium) et 0,18 % (small)**, et **toutes** remontent à deux lignes
+d'un ou deux mots que l'appariement de la mesure confond — pas le modèle.
+
+Ce qui arrive vraiment sur une bande dense est le **décompte** : 298 lignes
+rendues pour 284. Le mode de défaillance que le caractère absorbe et que le
+Jaccard refuse. **La réserve de H10 tombe pour ce cas**, et seulement pour
+lui : un producteur qui demanderait une *transcription* sans donner les
+lignes rendrait l'ordre au modèle, et rien ici ne le mesure.
+
+**Le défaut de `min_source_similarity` a une sortie, et ce n'est pas un
+seuil.** Les deux questions qu'il confond n'ont pas besoin de la même
+preuve : la plausibilité se juge contre le texte, l'attachement contre les
+pixels. Mesuré en dégradant la source jusqu'à 45 % : le recouvrement des
+deux populations passe de 0 % à **70 %** côté texte — plus aucun seuil ne
+sépare — et reste à **11 %** côté pixels, dont la médiane sur les lignes
+correctes ne bouge pas (0,95 → 0,94). Le signal ne dépend pas de la qualité
+de la source.
+
+Réserve écrite au rapport : j'ai bruité le **texte**, pas l'**image**. Le cas
+d'un scan abîmé, où le CTC souffrirait aussi, n'est pas mesuré.
+
+La forme que prendrait le garde d'attachement est une extension de surface
+publique de saknussemm — **type C**, arbitrage du mainteneur. Elle part dans
+`## Questions`, pas dans la file.
