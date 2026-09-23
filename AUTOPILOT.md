@@ -788,3 +788,16 @@ seul est un OCR médiocre et le texte source le corrige (lignes propres :
 4,8 % seul, 1,3 % avec). Renversement au-delà de 20–50 % de bruit. Deux
 régimes, frontière vers 20 %. Campagne sur les vraies boîtes Tesseract en
 cours — le vrai « ALTO pourri » que le mainteneur réclame.
+
+### 2026-09-23 — H13 §2.9 : la mesure de production, sur les vraies boîtes Tesseract
+
+Le mainteneur a relevé, à raison, que les campagnes NewsEye utilisaient
+les boîtes de la VT : borne haute, pas mesure de production. Note de
+méthode ajoutée en tête de §2 ; §2.1–2.8 requalifiées. Refait sur l'ALTO
+complet de Tesseract : CER de départ **20,6 %** (11,3 % sur boîtes VT) —
+la différence est de la structure : 9 % de fusions, 7 % de morceaux, 436
+lignes VT jamais vues. Post-correction : 20,6 → 18,3 % sous veto (−11 %,
+contre −34 % en borne haute) ; sur les lignes 1:1, 6,3 → 4,6 % ; zéro
+mal rattachée réelle (10 comptées, toutes des corrections justes de
+fragments). Gallica injoignable (000) depuis une heure ; la recherche de
+l'ALTO Gallica des pages NewsEye attend.
