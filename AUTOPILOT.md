@@ -757,3 +757,13 @@ prix du zéro, pas de la dérive. Lignes nues : 389/537 blocs sans le bon
 compte à 10 lignes. Prochaine expérience proposée : D, un DP global avec
 transitions explicites (saut dans le flux, fusion, coupure) et prior de
 largeur — en attente du mainteneur.
+
+### 2026-09-23 — H15 : D, le DP global — meilleur sur HIPE, coule sur NewsEye
+
+Construit et mesuré sans appel : D bat caractères sur HIPE (2,46 %) de
+peu, perd un peu sur OCR17+, et coule sur NewsEye (1 218 mal rattachées
+sans veto) parce qu'il *place*. Sensibilité : un saut moins cher aide
+(−12 points) mais 800 restent. E (référence étendue CTC) : 9,70 % sous
+veto, égal à H14. Les identifiants peints restent devant (7,37 %). D
+mérite de remplacer `characters` là où celui-ci marche ; il ne rend pas
+l'identité perdue.
