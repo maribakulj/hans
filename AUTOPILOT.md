@@ -705,3 +705,26 @@ refuse. Aucun des deux n'est un rattachement.
 
 NewsEye (8 pages BnF, 5 493 lignes, images) : Tesseract en cours pour
 l'OCR source ; campagne vision H12 ensuite.
+
+### 2026-09-23 — H13 §2–3 : NewsEye, le modèle apparie par l'image ; identifiants peints
+
+5 111 lignes, image + OCR Tesseract réel. Avec un bon découpage, H12 à
+identifiants opaques s'effondre quand même : **39 % de CER, 1 746 lignes
+sous le mauvais identifiant** — le VLM transcrit l'image de haut en bas et
+remplit les cases, dès qu'une ligne non envoyée est visible ou que la
+source est fragmentaire. Le canal d'identité ne tient que si image et
+texte se correspondent un pour un.
+
+Réponse : **l'identité dans l'image** — composite de lignes recadrées,
+identifiant peint à gauche. Dérive divisée par dix (182), refus par quatre
+(415), **CER 11,26 % → 8,03 %** avec veto, 3 résiduelles dont aucune n'est
+le texte d'une autre ligne. Le prix du zéro est concentré sur les 212
+lignes en bouillie (33,8 % sans veto, 80 % avec).
+
+Fusion ancres+caractères : gain modeste (HIPE 2,41 %), ne sauve pas la
+transcription. Repli ligne à ligne : 77 % repassent le veto, zéro mal
+rattachée, CER inchangé — sûr, pas rentable.
+
+Trois lanceurs refusés avant envoi (découpages) et un tué par la mémoire
+(8 pages pleine résolution en cache) ; corrigé : image ouverte par bloc,
+sauvegarde incrémentale, reprise.
