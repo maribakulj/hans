@@ -811,3 +811,11 @@ l'ALTO de production Gallica des pages OCR17+ (six arks dans les noms) :
 429 après la sonde d'arks, puis 500 et connexions coupées. À reprendre
 à ≥ 10 s par requête, un autre jour. Les arks `btv1b` (documents
 « images ») n'ont peut-être pas d'OCR.
+
+### 2026-09-23 — accès API IIIF v3 BnF (Ludovic)
+
+Jeton OAuth, image, info.json, manifeste : tout répond, y compris pendant
+que gallica.bnf.fr coupe. Pas d'OCR dans cette API (manifeste sans
+seeAlso par canvas, URL devinées → 404) : l'ALTO reste sur
+RequestDigitalElement, qui rend 500 sur Corneille f79. `tools/bnf_api.py`
+lit les identifiants dans le trousseau — jamais dans le dépôt.
