@@ -779,3 +779,12 @@ optimistes. La post-correction a un domaine : CER source sous 10–15 % ;
 au-dessus de 25–30 %, c'est de l'OCR, hors périmètre de saknussemm.
 Campagne « transcription seule » en cours pour chiffrer ce que le texte
 source apporte, tranche par tranche.
+
+### 2026-09-23 — H13 §2.8 : le texte source aide à lire, ici — l'inverse de H10
+
+Transcription seule (structure ALTO, pas de texte) contre correction :
+10,0 % contre 6,4 % sans veto. Sur cette presse en petit corps, le VLM
+seul est un OCR médiocre et le texte source le corrige (lignes propres :
+4,8 % seul, 1,3 % avec). Renversement au-delà de 20–50 % de bruit. Deux
+régimes, frontière vers 20 %. Campagne sur les vraies boîtes Tesseract en
+cours — le vrai « ALTO pourri » que le mainteneur réclame.
