@@ -801,3 +801,13 @@ contre −34 % en borne haute) ; sur les lignes 1:1, 6,3 → 4,6 % ; zéro
 mal rattachée réelle (10 comptées, toutes des corrections justes de
 fragments). Gallica injoignable (000) depuis une heure ; la recherche de
 l'ALTO Gallica des pages NewsEye attend.
+
+### 2026-09-23 — éligibilité, et Gallica qui coupe
+
+`docs/ELIGIBILITE.md` : les critères (structure 1:1, texte entre 2 et
+50 %, image lisible par le VLM, latin/français) et le tri des corpus
+Gallica. Cœur de cible : monographies XVIe–XVIIIe. Tentative de récupérer
+l'ALTO de production Gallica des pages OCR17+ (six arks dans les noms) :
+429 après la sonde d'arks, puis 500 et connexions coupées. À reprendre
+à ≥ 10 s par requête, un autre jour. Les arks `btv1b` (documents
+« images ») n'ont peut-être pas d'OCR.
