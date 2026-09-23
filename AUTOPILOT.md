@@ -739,3 +739,11 @@ contre 37,6 % à 20–50 %). Référence « tout ce qui est visible dans le
 recadrage » : −11 points sans veto, **9,70 %** sous veto — mais toujours
 derrière les identifiants peints (8,03 %) : recouper après coup vaut
 moins qu'empêcher la dérive. Le CTC reste en secours et en géométrie.
+
+### 2026-09-23 — H13 §2.6 : blocs de 20 lignes, identifiants peints
+
+NewsEye, identifiants peints : 40 → 20 lignes par bloc divise la dérive
+par deux (182 → 84 sans veto), CER 8,03 % → **7,37 %** sous veto, **zéro**
+résiduelle. Le bras lignes nues ne garde pas le compte à 20 non plus
+(218/280 blocs). Blocs de 10 en cours ; résultats copiés dans
+`~/corpus-vt/resultats/` pour survivre à un redémarrage.
