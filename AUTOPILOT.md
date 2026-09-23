@@ -862,3 +862,10 @@ Boucle VR (PR #166) : VR-1 page entière, VR-2 regroupement des régions,
 VR-3 plafond d'images lu sur le client, VR-4 notes de corpus, VR-5
 séparateurs — faits ; VR-6, VR-7 mesurés. Run de vérification VR-4 en
 vision en cours.
+
+### 2026-09-24 — vague VR close
+
+VR-4 vérifié en vision : page entière + note 4,19 % / 4,39 %, composite
+regroupé 4,23 %, zéro mal rattachée — tous sous le 4,58 % du script. Plan
+de saknussemm mis à jour, PR #166 commentée. Reste au mainteneur : merger,
+et faire de `attachment_scope="page"` le défaut de `vision()`.
