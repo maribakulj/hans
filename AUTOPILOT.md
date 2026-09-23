@@ -256,14 +256,14 @@ Hors de portée de la boucle, et ce n'est pas un problème à contourner :
 
 ## Questions ouvertes
 
-- **Séparer plausibilité et attachement.** `min_source_similarity` répond
-  aux deux avec un seul nombre, et le profil vision perd l'attachement en
-  baissant le seuil pour la plausibilité. La sortie mesurée (H11 §2) est une
-  autre *preuve*, pas un autre seuil : les pixels de la ligne, dont le
-  pouvoir de séparation ne dépend pas de la qualité de l'OCR. Cela demande
-  un garde d'attachement distinct dans saknussemm — extension de surface
-  publique, donc `CHANGELOG`, `docs/versioning.md` et les deux tests de
-  surface dans le même commit. **C** — arbitrage du mainteneur.
+- **Séparer plausibilité et attachement — RETIRÉ le 2026-09-23.** Le
+  recours par les pixels admettait 3 lignes sur 20 sur un score. Le
+  mainteneur exige zéro ligne mal rattachée, quitte à refuser. Remplacé par
+  le veto par marge de H12, mesuré à zéro sur tout ce qui a été cherché, et
+  qui reste sous `I4`. Ce qui demande arbitrage maintenant : ajouter ce veto
+  comme garde de saknussemm (une *marge* contre les voisines, en plus du
+  plancher `min_source_similarity`), et un producteur line-keyed compact
+  avec image de page. **C**.
 - **La géométrie verticale.** Tout ici est horizontal. Un polygone par mot
   demande un masque d'encre (§9 du récapitulatif) et c'est un jalon qui
   n'existe pas encore. **C** — ne pas l'ouvrir sans arbitrage.
@@ -650,3 +650,26 @@ d'un scan abîmé, où le CTC souffrirait aussi, n'est pas mesuré.
 La forme que prendrait le garde d'attachement est une extension de surface
 publique de saknussemm — **type C**, arbitrage du mainteneur. Elle part dans
 `## Questions`, pas dans la file.
+
+### 2026-09-23 — H12 : zéro ligne mal rattachée, la sûreté vient du veto, pas du canal
+
+Le mainteneur a tranché : aucune ligne mal rattachée, même contre un gain.
+Le recours de H11 §3 est retiré. Rapport : `docs/H12.md`.
+
+**La cause est lue, pas supposée.** Sur la bande du *Temps*, `small` rend
+284/284 et décale seize lignes : une ligne parasite `«` supprimée, une ligne
+coupée en deux seize lignes plus loin. Compte exact, position fausse.
+
+**Les entiers dans le flux ne protègent de rien** — le modèle renumérote en
+comptant (20 et 142 lignes sous le mauvais numéro). **Les ID ALTO opaques
+tiennent** : zéro sur les deux modèles, il les recopie.
+
+**Le veto par marge** — plancher 0,35 *et* 0,15 d'avance sur toute autre
+ligne de la page — laisse passer zéro ligne mal rattachée sur toutes les
+campagnes (jugé par un critère indépendant), et zéro sur 126 échanges
+délibérés jusqu'à 75 % de bruit OCR. Le prix : 5 % de refus sur OCR propre,
+55 % à 60 % de bruit. Les pixels n'ajoutent rien en veto : la bibliothèque
+reste sous `I4`.
+
+Deux items de type **C** en questions ouvertes ; rien de plus à faire sans
+arbitrage.
