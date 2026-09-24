@@ -957,3 +957,13 @@ voisine, le reste est juste — invisible à la marge et à l'absorption.
 Proposé `VR-12` à saknussemm, à mesurer avant d'écrire. H16/H17 corrigés
 (« 0 au proxy »). Rapport `docs/H19.md`, planches
 `~/corpus-vt/resultats/inspect/`.
+
+### 2026-09-24 — H19 corrigé par le mainteneur : le cas 3 est une hallucination
+
+« Lutte contre l'impérialisme des puissances » n'est nulle part sur la
+page : pas un déplacement, une invention d'une demi-ligne sur le moule de
+la voisine. Au sens de la règle (aucune ligne ne reçoit le texte d'une
+autre) : 2 cas d'un mot, tous deux en revue, 0 en `corrected`. Mais une
+demi-ligne inventée livrée `corrected` est plus grave pour la qualité ;
+VR-12 reformulé : mesurer par mots la part de la correction sans ancrage
+dans la source, avant de décider s'il y a un seuil.
