@@ -892,3 +892,13 @@ rattachée** : le texte d'une ligne que Tesseract n'avait jamais produite
 (`nistre des travaux publics…`), posé sur sa voisine. Le veto ne peut pas
 voir une source qui n'existe pas ; la page (45 % de lignes ratées) est hors
 domaine au triage géométrique, et la ligne est sortie en `review_required`.
+
+### 2026-09-24 — H17 : NewsEye en production dans saknussemm, boucle VR close
+
+Trois bras, 5 102 lignes jugées par géométrie. Recadrage par ligne +
+`vision(page)` : 21,20 → **18,28 %** (script 18,30 %). Composite : 18,60 →
+18,59 % avec VR-9, chunks repliés 234 → 115. Réelles mal rattachées : 1 à
+3, toutes hors domaine, toutes en `review_required`, toutes du texte d'une
+ligne que l'OCR n'avait jamais produite. VR-10 (étage A qui coule des
+chunks entiers sur des paires en bouillie) mesuré et laissé au mainteneur.
+Rapport `docs/H17.md`.
