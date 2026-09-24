@@ -11,7 +11,14 @@ from pathlib import Path
 
 import pytest
 
-from hans.triage import Thresholds, column_width, read_boxes, triage
+from hans.triage import (
+    Thresholds,
+    column_width,
+    lines_to_resegment,
+    read_boxes,
+    triage,
+    vertical_overlap,
+)
 
 PITCH, HEIGHT = 40, 30
 
@@ -144,3 +151,32 @@ def test_page_xml_polygons_are_read_too(tmp_path: Path):
         (200, 140, 1100, 30),
     ]
     assert page.lines[0].text == "mot"
+
+
+def test_a_box_biting_into_its_neighbour_is_sent_to_resegmentation(write):
+    boxes = _columns()
+    x, y, w, _ = boxes[5]
+    boxes[5] = (x, y, w, int(2.2 * HEIGHT))  # a double box: covers line 6 too
+    page = read_boxes(write(boxes))
+    flagged = lines_to_resegment(page, max_overlap=0.35)
+    assert "l5" in flagged and "recouvre" in flagged["l5"]
+    # its victim is bitten on most of its own height too
+    assert "l6" in flagged
+    # a clean line in the other column is untouched
+    assert "l45" not in flagged
+
+
+def test_overlap_needs_the_same_column(write):
+    a = read_boxes(write([(200, 100, 1000, 30), (1500, 100, 1000, 30)])).lines
+    assert vertical_overlap(a[0], a[1]) == 0.0
+    b = read_boxes(write([(200, 100, 1000, 30), (200, 115, 1000, 30)])).lines
+    assert vertical_overlap(b[0], b[1]) == pytest.approx(0.5)
+
+
+def test_height_alone_can_flag_a_tall_box(write):
+    boxes = _columns()
+    x, y, w, _ = boxes[0]
+    boxes[0] = (x, y - 20, w, 3 * HEIGHT)
+    page = read_boxes(write(boxes))
+    assert "l0" in lines_to_resegment(page, max_overlap=0.99, fused_ratio=2.2)
+    assert "l0" not in lines_to_resegment(page, max_overlap=0.99)

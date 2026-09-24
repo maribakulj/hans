@@ -171,6 +171,43 @@ def column_width(
     return block
 
 
+def vertical_overlap(a: LineBox, b: LineBox) -> float:
+    """La part de la hauteur de ``a`` recouverte par ``b``, quand les deux
+    boîtes se recouvrent horizontalement d'au moins la moitié de la plus
+    étroite (même colonne) ; 0 sinon."""
+    hx = min(a.right, b.right) - max(a.hpos, b.hpos)
+    if hx <= 0 or hx < 0.5 * min(a.width, b.width):
+        return 0.0
+    hy = min(a.bottom, b.bottom) - max(a.vpos, b.vpos)
+    return max(0.0, hy / max(1, a.height))
+
+
+def lines_to_resegment(
+    page: PageBoxes, *, max_overlap: float = 0.35, fused_ratio: float | None = None
+) -> dict[str, str]:
+    """Le tri PAR LIGNE (VR-13) : les boîtes qui mordent sur une voisine de
+    la même colonne de plus de ``max_overlap`` de leur hauteur, et, si
+    ``fused_ratio`` est donné, celles plus hautes que ``fused_ratio`` fois
+    la hauteur médiane de la page. Rend ``{line_id: raison}``.
+
+    Mesuré sur NewsEye (H19, addendum) : à 0,35, 79 % des boîtes que le
+    proxy dit fusionnées sont écartées, pour 8 % des lignes 1:1 — qui
+    mordent aussi. Ces lignes ne sont pas à corriger : leur recadrage
+    montre un bout d'une autre ligne, et le contrat « une ligne de texte
+    par boîte » n'a pas de réponse juste pour elles. À re-segmenter."""
+    out: dict[str, str] = {}
+    med = median(ln.height for ln in page.lines) if page.lines else 0
+    for ln in page.lines:
+        best = max(
+            (vertical_overlap(ln, o) for o in page.lines if o is not ln), default=0.0
+        )
+        if best > max_overlap:
+            out[ln.line_id] = f"recouvre une voisine à {best:.0%}"
+        elif fused_ratio is not None and med and ln.height > fused_ratio * med:
+            out[ln.line_id] = f"hauteur {ln.height / med:.1f} × la médiane"
+    return out
+
+
 @dataclass(frozen=True)
 class Thresholds:
     fused_ratio: float = 2.2
@@ -368,7 +405,9 @@ __all__ = [
     "Thresholds",
     "Verdict",
     "column_width",
+    "lines_to_resegment",
     "read_boxes",
     "triage",
     "uncovered_ink",
+    "vertical_overlap",
 ]
