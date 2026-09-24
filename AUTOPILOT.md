@@ -943,3 +943,17 @@ garde neuve a joué une fois (chaîne de trois membres, *Paris-Soir*,
 plancher). Tout ce que le mainteneur a validé est fait et vérifié : VR-7,
 VR-9, VR-10, triage (H18) ; VR-11 trouvé et corrigé en chemin. Reste au
 mainteneur : merger la PR #166. **Arrêt** : plus d'item validé ouvert.
+
+### 2026-09-24 — H19 : relecture à l'œil, les zéros du proxy ne sont pas des zéros
+
+Le mainteneur demande si « 0 erreurs de lignes » est sûr. Relecture sur
+l'image de toutes les lignes changées d'OCR17+ (175) et des candidates
+NewsEye dans le domaine (56 sur 4 069, filtre ressemblance < 0,75 ou mot
+d'une voisine). Trouvé : 1 (OCR17+, « TIR. » de la ligne suivante en tête,
+`review_required`), 1 (recadrage, « pouvoir » de la ligne du dessus,
+`review_required`), 1 (composite, demi-ligne calquée sur la voisine,
+**`corrected`**). Forme commune : le début de la correction vient de la
+voisine, le reste est juste — invisible à la marge et à l'absorption.
+Proposé `VR-12` à saknussemm, à mesurer avant d'écrire. H16/H17 corrigés
+(« 0 au proxy »). Rapport `docs/H19.md`, planches
+`~/corpus-vt/resultats/inspect/`.
