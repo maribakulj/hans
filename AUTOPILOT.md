@@ -999,3 +999,14 @@ résolution. Défaut vu : page non livrable (`ProjectionError`) après des
 replis de césure sur PAGE XML, intermittent — dumps armés. Étape 1b + 2
 lancées (relances, lines/région × small/large). VR-13 mesuré (0,35 :
 1,8 % des lignes, 0,09 pt).
+
+### 2026-09-24 — VR-14 : une réponse en NFD rendait la page non livrable
+
+Le dump d'une page non livrable (campagne H20) a donné la cause : le
+modèle répond parfois avec des accents décomposés ; la décision les
+gardait tels quels, le réécrivain écrivait en NFC, la vérification
+divergeait, la page entière était perdue sans erreur visible. Corrigé
+dans saknussemm (`ReplaceLine.text` / `ReplaceSpan.text` en NFC à la
+construction, test de bout en bout, 1 961 tests, c48980e). Étape 2 sur
+OCR17+ : small hors course (6,8 %), large pas mieux que medium. H20
+réécrit (son en-tête avait été écrasé par une redirection).
