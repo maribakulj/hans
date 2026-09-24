@@ -869,3 +869,26 @@ VR-4 vérifié en vision : page entière + note 4,19 % / 4,39 %, composite
 regroupé 4,23 %, zéro mal rattachée — tous sous le 4,58 % du script. Plan
 de saknussemm mis à jour, PR #166 commentée. Reste au mainteneur : merger,
 et faire de `attachment_scope="page"` le défaut de `vision()`.
+
+### 2026-09-24 — NewsEye à travers saknussemm : VR-8, VR-9, règle 13
+
+Deux défauts de plus vus au run, corrigés sur la branche de la PR #166 :
+**VR-8** — `crop_region` convertissait la page entière pour chaque ligne
+(deux copies de 190 Mo par recadrage sur une page de presse ; run tué) →
+`open_page` une fois par chunk ; **VR-9** — une ligne rendue vide (« illisible »,
+comme le prompt le demande) coulait le chunk entier (29 retries sur 67,
+342 lignes rendues à l'OCR) → la source est remise.
+
+**Règle 13** : sur cette machine (16 Go, mémoire libre ≈ 0), l'harnais tue
+les tâches de fond sous pression mémoire, même quand le processus lui-même
+est modeste. Un run long se lance **détaché** (`nohup … &`, journal dans
+`~/corpus-vt/resultats/`) et se suit par un moniteur sur le journal.
+
+Bras 1 (composite regroupé, note 1930, portée page) : 21,20 → 18,60 %
+(script §2.9 : 20,63 → 18,30 %), 294 chunks, 67 retries, 234 chunks
+repliés, 30 signalements dont 22 fusions, 6 corrections justes contre une
+VT en bouillie, 1 proxy géométrique faux, et **1 ligne réellement mal
+rattachée** : le texte d'une ligne que Tesseract n'avait jamais produite
+(`nistre des travaux publics…`), posé sur sa voisine. Le veto ne peut pas
+voir une source qui n'existe pas ; la page (45 % de lignes ratées) est hors
+domaine au triage géométrique, et la ligne est sortie en `review_required`.
