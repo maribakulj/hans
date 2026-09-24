@@ -1019,3 +1019,14 @@ CER, plus d'inventions (79). Imprimés : medium meilleur des trois. Étape 3
 lancée (stage3.log) : région × strict / nu sur OCR17+ (+ relance note),
 recadrage × strict / nu × medium et × strict × small, région × strict ×
 large sur NewsEye.
+
+### 2026-09-25 — Campagne H20 close (25 bras)
+
+Étape 3 : le prompt strict ne réduit pas les inventions (21→21, 57→54,
+79→81) ; la note de corpus vaut 2 points sur le XVIIe, rien sur 1937.
+Conclusion : imprimés = medium + note, page 1 024 px (le moins cher, dans
+la variance de région/page 2 048) ; presse = recadrage par ligne × small
+(5,75 %, 0,15 $ les 6 pages) contre région × large (5,39 %, 2,4 $, 50 %
+d'inventions en plus). Le résidu d'inventions (11 % / 3 % des lignes
+changées) ne bouge avec aucune configuration. Reste : VR-12 et VR-13 dans
+la chaîne, puis relecture à l'œil. **Arrêt de la boucle.**
