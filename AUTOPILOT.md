@@ -902,3 +902,19 @@ Trois bras, 5 102 lignes jugées par géométrie. Recadrage par ligne +
 ligne que l'OCR n'avait jamais produite. VR-10 (étage A qui coule des
 chunks entiers sur des paires en bouillie) mesuré et laissé au mainteneur.
 Rapport `docs/H17.md`.
+
+### 2026-09-24 — H18 : le triage géométrique, validé et livré
+
+Décision du mainteneur : les pages où la segmentation a lâché sortent de
+la chaîne (à ré-OCRiser, autre outil) ; le triage qui les écarte est
+validé. Livré dans `src/hans/triage.py`, sur le fichier de boîtes seul :
+`fused`, `wide`, `disorder`, `gaps` décident, `uncovered` (encre hors
+boîte, avec l'image) informe seulement — sur les hebdomadaires illustrés
+il mesure les photos, pas les lignes ratées. Piège corrigé : le théâtre
+indenté (Bruyère, Molière) faisait lire deux colonnes ; l'estimation se
+contrôle maintenant par la médiane des lignes. Calibrage 18/18 sur les
+pages connues, dont les deux pages de H17 où sont apparues les lignes
+réellement mal rattachées — refusées, pour deux raisons différentes.
+Seuils réglés après coup, et dits tels : la mesure recevable est un corpus
+jamais vu (H19, Gallica, dès que l'OCR par l'API est ouvert). Dix tests,
+suite verte (104). Rapport `docs/H18.md`.
