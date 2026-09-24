@@ -244,6 +244,9 @@ async def run(corpus: str, producer: str, prompt: str, model_key: str, max_side:
         except Exception as exc:  # noqa: BLE001
             print(f"  {name[:28]:<30} ÉCHEC {type(exc).__name__}: {str(exc)[:120]}", flush=True)
             pages[name] = {"error": f"{type(exc).__name__}: {exc}"[:300]}; continue
+        if not result.corrected_files:
+            print(f"  {name[:28]:<30} ÉCHEC aucun fichier rendu — événements {rec.counts()} replis {dict(result.fallback_reasons)}", flush=True)
+            pages[name] = {"error": "aucun fichier rendu", "events": {str(k): v for k, v in rec.counts().items()}}; continue
         texts = judge(corpus, name, src_xml, ref_xml, next(iter(result.corrected_files.values())), vt_all)
         p = dict(E=0, L=0, Es=0, changed=0, better=0, worse=0, unanchored=0, wrong=0)
         vts = {k: v[2] for k, v in texts.items()}
