@@ -933,3 +933,13 @@ plancher ni marge) ; rejouée, la garde la refuse. Corrigé (saknussemm
 c0fb6f0, 1 959 tests), run de vérification relancé. L'autre est le
 plancher 0,15 sur une page à 57 % de CER : hors domaine, refusée par H18.
 H17 mis à jour.
+
+### 2026-09-24 — VR-11 vérifié, boucle close
+
+Run de vérification (NewsEye, composite, VR-9 + VR-10 + VR-11) : 21,20 →
+18,45 %, 2 chunks repliés, 33 retries, 36 signalées / 3 réelles — les
+trois connues, toutes hors domaine (H18 les refuse), aucune nouvelle. La
+garde neuve a joué une fois (chaîne de trois membres, *Paris-Soir*,
+plancher). Tout ce que le mainteneur a validé est fait et vérifié : VR-7,
+VR-9, VR-10, triage (H18) ; VR-11 trouvé et corrigé en chemin. Reste au
+mainteneur : merger la PR #166. **Arrêt** : plus d'item validé ouvert.
