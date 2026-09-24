@@ -1010,3 +1010,12 @@ dans saknussemm (`ReplaceLine.text` / `ReplaceSpan.text` en NFC à la
 construction, test de bout en bout, 1 961 tests, c48980e). Étape 2 sur
 OCR17+ : small hors course (6,8 %), large pas mieux que medium. H20
 réécrit (son en-tête avait été écrasé par une redirection).
+
+### 2026-09-24 — Campagne, étape 2 close, étape 3 lancée
+
+Presse : recadrage × small 5,80 / medium 5,67 / large 5,73 % (dans la
+variance ; large 198 chunks repliés) ; région × large **5,51 %**, meilleur
+CER, plus d'inventions (79). Imprimés : medium meilleur des trois. Étape 3
+lancée (stage3.log) : région × strict / nu sur OCR17+ (+ relance note),
+recadrage × strict / nu × medium et × strict × small, région × strict ×
+large sur NewsEye.
