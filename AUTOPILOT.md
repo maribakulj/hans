@@ -918,3 +918,18 @@ réellement mal rattachées — refusées, pour deux raisons différentes.
 Seuils réglés après coup, et dits tels : la mesure recevable est un corpus
 jamais vu (H19, Gallica, dès que l'OCR par l'API est ouvert). Dix tests,
 suite verte (104). Rapport `docs/H18.md`.
+
+### 2026-09-24 — VR-7 et VR-10 faits et vérifiés, VR-11 trouvé au run
+
+Décisions du mainteneur exécutées sur saknussemm (PR #166) : `vision()`
+tient la portée page (VR-7) ; l'étage A ne coule plus le chunk entier sur
+une paire en bouillie, la paire seule retombe (VR-10). Vérifié sur
+NewsEye, bras composite : chunks repliés 115 → 1, retries 41 → 29, CER
+18,59 → 18,48 %. Le run a montré ce que VR-10 coûte, comme prévu : 4
+lignes réellement mal rattachées contre 2, les deux nouvelles en
+`corrected`, sur les deux pages hors domaine. L'une a révélé **VR-11** — un
+membre de paire de césure réconcilié ne passait jamais l'étage C (ni
+plancher ni marge) ; rejouée, la garde la refuse. Corrigé (saknussemm
+c0fb6f0, 1 959 tests), run de vérification relancé. L'autre est le
+plancher 0,15 sur une page à 57 % de CER : hors domaine, refusée par H18.
+H17 mis à jour.
