@@ -245,7 +245,12 @@ async def run(corpus: str, producer: str, prompt: str, model_key: str, max_side:
             print(f"  {name[:28]:<30} ÉCHEC {type(exc).__name__}: {str(exc)[:120]}", flush=True)
             pages[name] = {"error": f"{type(exc).__name__}: {exc}"[:300]}; continue
         if not result.corrected_files:
-            print(f"  {name[:28]:<30} ÉCHEC aucun fichier rendu — événements {rec.counts()} replis {dict(result.fallback_reasons)}", flush=True)
+            und = getattr(result, "undeliverable_files", None)
+            print(f"  {name[:28]:<30} ÉCHEC aucun fichier rendu — non livrable : {und} ; replis {dict(result.fallback_reasons)}", flush=True)
+            dump = {"page": name, "src": str(src_xml), "undeliverable": {k: str(v) for k, v in (und or {}).items()},
+                    "decisions": [{"line_id": d.ref.line_id, "source": d.source_text, "final": d.final_text, "status": d.status.value,
+                                   "reason": d.fallback_reason} for d in result.decisions.decisions]}
+            (OUT / f"undeliverable__{tag}__{name[:20]}.json").write_text(json.dumps(dump, ensure_ascii=False, indent=1), encoding="utf-8")
             pages[name] = {"error": "aucun fichier rendu", "events": {str(k): v for k, v in rec.counts().items()}}; continue
         texts = judge(corpus, name, src_xml, ref_xml, next(iter(result.corrected_files.values())), vt_all)
         p = dict(E=0, L=0, Es=0, changed=0, better=0, worse=0, unanchored=0, wrong=0)
