@@ -976,3 +976,13 @@ texte, le rewriter écrit `corrected_text` quel que soit le statut, 759 et
 Personne ne relit en production : ce statut ne doit plus jamais être
 présenté comme une protection. Les trois cas de H19 sont trois textes faux
 livrés. H19 et H17 corrigés.
+
+### 2026-09-24 — Le cas Regards n'est pas lié à VR-10 (mesuré)
+
+Voisinage (≤ 10 lignes) des 16 paires VR-10 : 68,9 % améliorées / 17,8 %
+dégradées, contre 66,2 / 22,7 ailleurs. L'invention est un accident du
+composite, un sur 2 787. Les trois cas de H19 sont sur des pages **dans
+le domaine** (Corneille ~6 %, Ce soir 7,9 %, Regards D4 11,2 %, triage
+passé) : les trois conditions de production ne les écartent pas. La boîte
+double de Ce soir est un défaut local sur une page à 3,8 % de fusions —
+d'où un tri par ligne (VR-13), pas seulement par page.
