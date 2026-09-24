@@ -986,3 +986,16 @@ le domaine** (Corneille ~6 %, Ce soir 7,9 %, Regards D4 11,2 %, triage
 passé) : les trois conditions de production ne les écartent pas. La boîte
 double de Ce soir est un défaut local sur une page à 3,8 % de fusions —
 d'où un tri par ligne (VR-13), pas seulement par page.
+
+### 2026-09-24 — Campagne (H20), étape 1 close, étape 2 lancée
+
+Six producteurs × deux corpus, medium, note de corpus. Imprimés : la
+région du chunk à 2 048 px (nouveau producteur, hans) devant (3,88 % sur
+8 pages), page 2 048 px 4,24 %, recadrage par ligne 4,53 %. Presse : le
+recadrage par ligne seul devant (5,67 %, 0 chunk replié) ; les vues
+larges perdent des chunks par dérive des césures ; la page entière est
+la pire (6,4 %). Les inventions (sans ancrage) ne bougent pas avec la
+résolution. Défaut vu : page non livrable (`ProjectionError`) après des
+replis de césure sur PAGE XML, intermittent — dumps armés. Étape 1b + 2
+lancées (relances, lines/région × small/large). VR-13 mesuré (0,35 :
+1,8 % des lignes, 0,09 pt).
