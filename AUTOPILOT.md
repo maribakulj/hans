@@ -967,3 +967,12 @@ autre) : 2 cas d'un mot, tous deux en revue, 0 en `corrected`. Mais une
 demi-ligne inventée livrée `corrected` est plus grave pour la qualité ;
 VR-12 reformulé : mesurer par mots la part de la correction sans ancrage
 dans la source, avant de décider s'il y a un seuil.
+
+### 2026-09-24 — Rappel du mainteneur : `review_required` ne livre rien de différent
+
+Vérifié dans le code et sur les runs : `refer_for_review` n'écrit pas de
+texte, le rewriter écrit `corrected_text` quel que soit le statut, 759 et
+814 lignes `review_required` livrées avec leur correction sur NewsEye.
+Personne ne relit en production : ce statut ne doit plus jamais être
+présenté comme une protection. Les trois cas de H19 sont trois textes faux
+livrés. H19 et H17 corrigés.
