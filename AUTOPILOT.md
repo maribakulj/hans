@@ -1043,3 +1043,10 @@ par ligne. Une panne réseau a cassé un run (relancé, même chiffre). GLM
 mainteneur : 20 % boîtes fusionnées (mesure), 1,2 pt typographie
 (mesure), 285 paires de césure rendues (garde), le reste lettres mal
 lues ; vrai résidu 1:1 normalisé 3,46 %.
+
+### 2026-09-25 — GLM 5.3 texte seul : 7,91 %, 203 lignes sans réponse valide
+
+Neuf pages en 69 min : 8,55 → 7,91 %, 25 lignes changées, 203 rendues à
+l'OCR (format non respecté). Une page (La Fayette) à 3,29 % sans repli
+montre le potentiel ; sans vision et sans discipline de format, hors
+course. H20 clos.
