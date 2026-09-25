@@ -100,11 +100,12 @@ class RegionVisionEditProducer(PageVisionEditProducer):
     wants_geometry: bool = True
 
     def __init__(self, provider: Any, api_key: str, model: str, *, system_prompt: str,
-                 max_side: int = 2048, paint_ids: bool = False) -> None:
+                 max_side: int = 2048, paint_ids: bool = False, mask: bool = False) -> None:
         super().__init__(provider, api_key, model, system_prompt=system_prompt, max_side=max_side)
         self._paint_ids = paint_ids
+        self._mask = mask
         from dataclasses import replace
-        self.metadata = replace(self.metadata, name="region-vision" + ("-ids" if paint_ids else ""))
+        self.metadata = replace(self.metadata, name="region-vision" + ("-ids" if paint_ids else "") + ("-mask" if mask else ""))
 
     async def produce(self, payload: Any, *, options: Any) -> tuple[EditScript, Any]:
         asset = payload.image_ref
@@ -122,6 +123,18 @@ class RegionVisionEditProducer(PageVisionEditProducer):
         x0, y0 = max(0, int(left - mx - gutter)), max(0, int(top - my))
         x1, y1 = min(page.width, int(right + mx)), min(page.height, int(bottom + my))
         crop = page.crop((x0, y0, x1, y1)).convert("RGB")
+        if self._mask:
+            # Le découpage « image et texte » : hors des boîtes des lignes du
+            # chunk (marge 6 %), tout est blanc — le modèle ne voit que ce
+            # qu'il doit corriger, et pas les colonnes voisines.
+            canvas = Image.new("RGB", crop.size, "white")
+            for bx0, by0, bx1, by1 in boxes.values():
+                mh = (by1 - by0) * 0.06; mw = (bx1 - bx0) * 0.01
+                l, t = max(0, int(bx0 - mw - x0)), max(0, int(by0 - mh - y0))
+                r, b = min(crop.width, int(bx1 + mw - x0)), min(crop.height, int(by1 + mh - y0))
+                if r > l and b > t:
+                    canvas.paste(crop.crop((l, t, r, b)), (l, t))
+            crop = canvas
         aliases = line_aliases([ln.line_id for ln in payload.lines])
         if self._paint_ids:
             dr = ImageDraw.Draw(crop)
@@ -171,6 +184,10 @@ def make_arm(corpus: str, producer: str, prompt: str, model_key: str, key: str, 
     elif producer.startswith("regionids"):
         side = max_side or int(producer[9:] or 2048)
         prod = RegionVisionEditProducer(vlm, key, model, system_prompt=with_corpus_notes(REGION_IDS_PROMPT, *notes), max_side=side, paint_ids=True)
+    elif producer.startswith("regionmask"):
+        side = max_side or int(producer[10:] or 2048)
+        prod = RegionVisionEditProducer(vlm, key, model, system_prompt=with_corpus_notes(REGION_PROMPT, *notes), max_side=side, mask=True)
+        planner = ChunkPlannerConfig(max_lines_per_request=20, line_window_size=20, coalesce_blocks=False)
     elif producer.startswith("region"):
         side = max_side or int(producer[6:] or 2048)
         prod = RegionVisionEditProducer(vlm, key, model, system_prompt=with_corpus_notes(REGION_PROMPT, *notes), max_side=side)
