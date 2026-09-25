@@ -1030,3 +1030,16 @@ la variance de région/page 2 048) ; presse = recadrage par ligne × small
 d'inventions en plus). Le résidu d'inventions (11 % / 3 % des lignes
 changées) ne bouge avec aucune configuration. Reste : VR-12 et VR-13 dans
 la chaîne, puis relecture à l'œil. **Arrêt de la boucle.**
+
+### 2026-09-25 — Étape 4 : région masquée (découpage image et texte), GLM
+
+Réponse à la question du mainteneur sur le découpage : un chunk par bloc,
+recadrage de la région blanchi hors des boîtes du chunk. Imprimés :
+**3,98 %**, meilleur chiffre de la campagne, 0 retry. Presse : 5,90 /
+5,91 % (medium / small), mieux que la région nue, derrière le recadrage
+par ligne. Une panne réseau a cassé un run (relancé, même chiffre). GLM
+5.3 : sans vision ; en texte seul, client de la démo corrigé (branche),
+6 min par page, run complet en cours. Résidu du 5 % décomposé pour le
+mainteneur : 20 % boîtes fusionnées (mesure), 1,2 pt typographie
+(mesure), 285 paires de césure rendues (garde), le reste lettres mal
+lues ; vrai résidu 1:1 normalisé 3,46 %.

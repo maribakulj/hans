@@ -12,10 +12,10 @@ OUT = Path.home() / "corpus-vt" / "resultats" / "campagne"
 def main(pattern: str = "") -> None:
     rows = []
     for f in sorted(OUT.glob("*.json")):
-        if f.name.startswith("undeliverable") or pattern not in f.name:
+        if f.name.startswith(("undeliverable", "sak_run_")) or pattern not in f.name:
             continue
         a = json.loads(f.read_text(encoding="utf-8"))
-        if a.get("partial"):
+        if a.get("partial") or "corpus" not in a:
             continue
         failed = [p for p, v in a["pages"].items() if "error" in v]
         rows.append((a["corpus"], a["producer"], a.get("max_side"), a["prompt"], a["model"], a["cer_src"], a["cer_out"],
