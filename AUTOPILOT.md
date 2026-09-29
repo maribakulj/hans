@@ -1152,3 +1152,15 @@ Chronicling America injoignable (Cloudflare) ; Gallica trop instable ce
 jour pour d'autres pages. Corpus rangés dans `~/corpus-reel/ia` et
 `~/corpus-reel/bnl-open`. Reste au mainteneur : relire et merger #167, et
 décider du même travail côté PAGE.
+
+### 2026-09-29 (suite 2) — H22 : les inventions ont une vérité terrain, et une calibration par ligne
+
+Un mot retiré de l'ALTO et remis par la correction : la boîte du producteur
+est la réponse (`tools/insertions.py`). Première version 59-77 % des mots
+remis avec leurs deux bords à un demi-caractère ; largeur = bord faible.
+Échelle et espace relus sur les mots gardés de la ligne (saknussemm,
+`_line_calibration`) : 74-88 %. Ce qui reste est la largeur de *ce* mot
+dans *cette* justification, que la page ne sait pas — le seul cas où le
+CTC apporterait quelque chose. Question ouverte du mainteneur : le CTC en
+dernier recours seulement, quand l'ancrage échoue ou n'a aucune ancre —
+c'est une inversion d'ordre des étages de `_resolve_geometry`, **C**.
