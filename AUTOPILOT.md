@@ -1114,3 +1114,41 @@ suite complète, retirée.
 
 Outil : `tools/ab_gap_widths.py` (cinq bras, trois comparaisons, compte des
 frontières déplacées). 118 tests.
+
+### 2026-09-29 (suite) — H22 : garder les boîtes, n'ouvrir que la boîte touchée — 25 corpus, PR #167 de saknussemm
+
+Le mainteneur a recadré H21 : pas de vision, pas de réappariement complet,
+« utiliser les infos qu'on a logiquement ». Ce qu'on avait et qu'on jetait :
+les boîtes des mots que la correction ne touche pas. Le chemin lent de
+saknussemm redistribuait toute la ligne (`rewriter.py:1131`) alors que
+l'alignement source ↔ cible existait déjà trois lignes plus haut. Rapport :
+`docs/H22.md`.
+
+**Banc** (`tools/campagne_locale.py`, cinq bras sans pixels, dont le vrai
+`rewrite_alto_file` sur un fichier corrompu) : sur sept corpus de
+bibliothèque (12 000 lignes, ALTO et PAGE, BnF/Gallica/BnL/NewsEye/OCR17+),
+la répartition locale avec largeurs apprises met **97 à 99,8 %** des
+frontières dans le vrai blanc, médiane et p90 à 0 px, contre 64 à 84 % pour
+la ligne entière. Le prorata local fait déjà +13 à +32 points : c'est
+garder les boîtes qui compte.
+
+**Implémenté dans saknussemm** (PR #167, `formats/alto/_geometry.py`,
+`_resolve_geometry` à trois étages). Deux corrections dictées par le
+bout en bout, règle 4 : (1) la règle d'ancrage « même longueur » prenait
+une scission pour le même mot — 65 % sur BnF — remplacée par « le voisin
+inséré ou supprimé explique-t-il la différence ? » → 97,8 % ; (2) un mot
+inséré sans blanc faisait retomber toute la ligne au proportionnel — il
+emprunte maintenant ses pixels au voisin gardé.
+
+**Dix-huit livres d'Internet Archive** (DjVu XML, `read_djvu_lines`,
+61 000 lignes, six langues, 1548-1893) : 70 à 98,5 %. Deux causes lues :
+les boîtes ABBYY exportées en DjVu incluent le blanc du mot (jointives dans
+96-99 % des cas) — d'où une **constante par mot** dans l'ajustement, +6 à
++10 points sur ces livres, zéro effet ailleurs ; et l'OCR en bouillie des
+XVIe-XVIIe (7-19 % de mots invraisemblables), hors du domaine fixé par le
+mainteneur (CER ≤ 10 %).
+
+Chronicling America injoignable (Cloudflare) ; Gallica trop instable ce
+jour pour d'autres pages. Corpus rangés dans `~/corpus-reel/ia` et
+`~/corpus-reel/bnl-open`. Reste au mainteneur : relire et merger #167, et
+décider du même travail côté PAGE.
