@@ -4,7 +4,7 @@ Ce fichier est **l'état**, pas un compte rendu. Une session réveillée n'a pas
 mon contexte : elle a ce fichier, le dépôt, et rien d'autre. Si les deux se
 contredisent, **le code gagne** et ce fichier est corrigé.
 
-Dernière mise à jour : 2026-09-21.
+Dernière mise à jour : 2026-09-29.
 
 ---
 
@@ -274,6 +274,18 @@ Hors de portée de la boucle, et ce n'est pas un problème à contourner :
   empêcher : ce serait une hypothèse neuve (H2), à geler avant de mesurer, et
   de préférence sur un quatrième corpus jamais regardé. **C** — arbitrage du
   mainteneur.
+- **Des largeurs de glyphes apprises sur l'ALTO, dans saknussemm ?** H21
+  (2026-09-29) : la répartition proportionnelle avec des largeurs de lettres
+  apprises par moindres carrés sur les boîtes de la page elle-même — sans
+  pixels, sans dépendance, sous `I4` — fait passer la part des frontières
+  au-delà de 0,5 caractère de 15,6 → 6,4 % (BnF), 19,0 → 3,1 % (Gallica),
+  21,0 → 10,9 % (BNL), et divise l'erreur moyenne et le p90 par deux. Elle
+  est **réfutée au critère gelé de H1** parce que le pire cas recule de 4 px
+  (BnF) et 10 px (Gallica) sur des lignes de tableau où les deux méthodes
+  sont à plus de 200 px. Relire la clause du pire cas pour une méthode sans
+  pixels serait la renégocier après mesure (règle 7) ; l'adopter dans
+  `_compute_geometry` de saknussemm est un changement de surface publique.
+  Les deux sont **C** — arbitrage du mainteneur. Rapport `docs/H21.md`.
 - **La césure.** Une fusion `N→1` à cheval sur deux `TextLine` ne peut pas
   être l'union de deux boîtes : ALTO a `SUBS_TYPE="HypPart1/HypPart2"` pour
   ça, et saknussemm a déjà `core/hyphenation.py`. Le banc ne fabrique aucun
@@ -1050,3 +1062,55 @@ Neuf pages en 69 min : 8,55 → 7,91 %, 25 lignes changées, 203 rendues à
 l'OCR (format non respecté). Une page (La Fayette) à 3,29 % sans repli
 montre le potentiel ; sans vision et sans discipline de format, hors
 course. H20 clos.
+
+### 2026-09-29 — H21 : largeurs de glyphes apprises — la branche ne déplace rien, la version sans pixels divise la queue par 2 à 6
+
+Question du mainteneur (via une conversation ChatGPT) : « peut-on calculer
+la boîte en calculant ce que pèse un caractère sur la ligne ? ». ChatGPT a
+écrit la branche `experiment/weighted-gap-widths-20260929` (PR #1) : les
+trous d'alignement du `CTCCutsResolver` répartis selon des largeurs
+relatives apprises sur les découpes de kraken. Tests synthétiques verts,
+CI verte, **aucune mesure sur corpus**. Rapport : `docs/H21.md`.
+
+**Les caches de H1 étaient dans `/tmp` et n'existaient plus.** Redécodés
+(kraken, CATMuS-Print, 41 fichiers), rangés durablement dans
+`~/corpus-reel/hans-cuts/`, `campaigns/h1.json` repointé ; la campagne H1
+rendue **au chiffre près** (0,22 / 0,06 / 0,62 %, pire 59,5 / 145 / 146) —
+le juge est reproductible cinq jours plus tard sur un cache neuf.
+
+**Règle 4, deux fois, sur la branche.** (1) Sur le cache BnF, **84 % des
+découpes par caractère font 0 px** : kraken donne où le caractère est émis,
+pas sa largeur. L'apprenant de la branche produisait 1,00 pour toutes les
+lettres (`m` = 0,75, `h` = 1,17 : du bruit). Remplacé par l'avance
+pic-à-pic, qui donne `i` 0,68, `a` 1,14, `m` 1,77 sur trois corpus.
+(2) `WeightedCTCCutsResolver.from_cache` passait `weighted_gaps=False` au
+constructeur : le résolveur chargé depuis un cache — le seul qu'une
+campagne construise — n'était jamais pondéré. Le test de la branche
+l'instanciait directement. Un test épingle maintenant la variante chargée.
+
+**Mesure, les deux défauts corrigés, `--strict`, critère gelé de H1 avec
+pour incumbent le résolveur de base de chaque bras** : la pondération des
+trous déplace **24 frontières sur 13 946** (±1 à 9 px, sans direction),
+que les largeurs viennent des découpes ou de l'ALTO. Cause lue sur les
+lignes : la frontière est ancrée par l'espace que kraken lit ; les trous
+sont *dans* les mots, où ni le banc ni la boîte ALTO du mot ne regardent.
+L'idée n'a pas de levier là où H1 mesure. **Réfutée** (0/3 corpus).
+
+**Ce que la conversation proposait et que la branche n'avait pas fait**
+(§6) : apprendre les largeurs sur les boîtes ALTO de la page elle-même,
+sans image. `hans/widths.py` : moindres carrés en Python pur, un inconnu
+par caractère plié, une passe d'élagage, **cross-fit par parité de ligne**
+(règle 9 : la page porte l'entrée, jamais la réponse ; test qui empoisonne
+une ligne et vérifie que son propre modèle ne l'a pas vue). Résultat
+ci-dessus, dans `## Questions`. Réfutée au critère gelé sur le pire cas ;
+les deux lignes en cause sont des tableaux où les deux méthodes sont à
+plus de 200 px. La boucle ne relit pas la clause : **C**.
+
+**CI de `main` rouge depuis le 2026-09-25** (mypy, `import-not-found` sur
+`saknussemm` et `PIL`, absents de l'extra `[test]`). La branche portait
+déjà la surcharge mypy qui la répare ; gardée, avec la raison écrite dans
+`pyproject.toml`. L'étape `pytest` ciblée ajoutée en CI, redondante avec la
+suite complète, retirée.
+
+Outil : `tools/ab_gap_widths.py` (cinq bras, trois comparaisons, compte des
+frontières déplacées). 118 tests.

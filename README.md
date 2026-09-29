@@ -73,6 +73,7 @@ python -m hans.bench chemin/vers/page.xml
 | G2 | `CTCCutsResolver` | écrit et mesuré |
 | G3 | `alignment_confidence` | clos sans être fait (contrat : H1 réfutée) |
 | G4 | Bout en bout | clos sans être fait (contrat : H1 réfutée) |
+| H21 | Largeurs de glyphes apprises : dans les trous du CTC, et sans pixels depuis l'ALTO | **mesurée** — voir [docs/H21.md](docs/H21.md) : la variante CTC ne déplace rien ; la variante sans pixels divise la queue par 2 à 6 mais aggrave le pire cas sur deux corpus, arbitrage mainteneur |
 
 **En une phrase** : le CTC fait passer la part des frontières mal placées de
 ~16-21 % à moins de 1 % sur les trois corpus — mais il aggrave le pire cas
