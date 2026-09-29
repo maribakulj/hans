@@ -4,171 +4,171 @@
     "BnF-bpt6k3265015q": [
       {
         "alto": "Users/marcel/cinoc/corpus/BnF-bpt6k3265015q/X0000002.xml",
-        "cuts": "tmp/cuts_bnf.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/cuts_bnf.json"
       }
     ],
     "Gallica-pinned": [
       {
         "alto": "Users/marcel/saknussemm/tests/external_corpus/pinned/bpt6k2206225_p0015.alto.xml",
-        "cuts": "tmp/cuts_g15.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/cuts_g15.json"
       },
       {
         "alto": "Users/marcel/saknussemm/tests/external_corpus/pinned/bpt6k6478860m_p0009.alto.xml",
-        "cuts": "tmp/cuts_med.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/cuts_med.json"
       },
       {
         "alto": "Users/marcel/saknussemm/tests/external_corpus/pinned/bpt6k2324031_p0002.alto.xml",
-        "cuts": "tmp/cuts_temps.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/cuts_temps.json"
       }
     ],
     "37-GT-BNL": [
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0000.xml",
-        "cuts": "tmp/cuts_bnl_v2/0000.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0000.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0001.xml",
-        "cuts": "tmp/cuts_bnl_v2/0001.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0001.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0002.xml",
-        "cuts": "tmp/cuts_bnl_v2/0002.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0002.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0003.xml",
-        "cuts": "tmp/cuts_bnl_v2/0003.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0003.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0004.xml",
-        "cuts": "tmp/cuts_bnl_v2/0004.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0004.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0006.xml",
-        "cuts": "tmp/cuts_bnl_v2/0006.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0006.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0007.xml",
-        "cuts": "tmp/cuts_bnl_v2/0007.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0007.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0008.xml",
-        "cuts": "tmp/cuts_bnl_v2/0008.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0008.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0009.xml",
-        "cuts": "tmp/cuts_bnl_v2/0009.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0009.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0010.xml",
-        "cuts": "tmp/cuts_bnl_v2/0010.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0010.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0011.xml",
-        "cuts": "tmp/cuts_bnl_v2/0011.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0011.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0012.xml",
-        "cuts": "tmp/cuts_bnl_v2/0012.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0012.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0013.xml",
-        "cuts": "tmp/cuts_bnl_v2/0013.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0013.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0014.xml",
-        "cuts": "tmp/cuts_bnl_v2/0014.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0014.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0015.xml",
-        "cuts": "tmp/cuts_bnl_v2/0015.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0015.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0016.xml",
-        "cuts": "tmp/cuts_bnl_v2/0016.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0016.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0017.xml",
-        "cuts": "tmp/cuts_bnl_v2/0017.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0017.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0018.xml",
-        "cuts": "tmp/cuts_bnl_v2/0018.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0018.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0019.xml",
-        "cuts": "tmp/cuts_bnl_v2/0019.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0019.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0020.xml",
-        "cuts": "tmp/cuts_bnl_v2/0020.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0020.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0021.xml",
-        "cuts": "tmp/cuts_bnl_v2/0021.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0021.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0022.xml",
-        "cuts": "tmp/cuts_bnl_v2/0022.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0022.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0023.xml",
-        "cuts": "tmp/cuts_bnl_v2/0023.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0023.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0024.xml",
-        "cuts": "tmp/cuts_bnl_v2/0024.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0024.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0025.xml",
-        "cuts": "tmp/cuts_bnl_v2/0025.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0025.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0026.xml",
-        "cuts": "tmp/cuts_bnl_v2/0026.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0026.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0027.xml",
-        "cuts": "tmp/cuts_bnl_v2/0027.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0027.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0028.xml",
-        "cuts": "tmp/cuts_bnl_v2/0028.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0028.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0029.xml",
-        "cuts": "tmp/cuts_bnl_v2/0029.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0029.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0030.xml",
-        "cuts": "tmp/cuts_bnl_v2/0030.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0030.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0031.xml",
-        "cuts": "tmp/cuts_bnl_v2/0031.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0031.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0032.xml",
-        "cuts": "tmp/cuts_bnl_v2/0032.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0032.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0033.xml",
-        "cuts": "tmp/cuts_bnl_v2/0033.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0033.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0035.xml",
-        "cuts": "tmp/cuts_bnl_v2/0035.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0035.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0036.xml",
-        "cuts": "tmp/cuts_bnl_v2/0036.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0036.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0037.xml",
-        "cuts": "tmp/cuts_bnl_v2/0037.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0037.json"
       },
       {
         "alto": "Users/marcel/cinoc/corpus/37-GT-BNL/0038.xml",
-        "cuts": "tmp/cuts_bnl_v2/0038.json"
+        "cuts": "Users/marcel/corpus-reel/hans-cuts/37-GT-BNL/0038.json"
       }
     ]
   }
