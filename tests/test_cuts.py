@@ -169,9 +169,7 @@ def test_weighted_gap_moves_only_the_boundary_inside_the_same_anchors() -> None:
     )
     tokens = ("aW", " ", "ib")
     plain = transfer(read, tokens, 0, 45)
-    weighted = transfer(
-        read, tokens, 0, 45, char_widths={"w": 4.0, " ": 1.0}
-    )
+    weighted = transfer(read, tokens, 0, 45, char_widths={"w": 4.0, " ": 1.0})
 
     assert (plain[1].hpos, plain[1].width) == (20, 10)
     assert (weighted[1].hpos, weighted[1].width) == (26, 4)
