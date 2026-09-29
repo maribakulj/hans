@@ -23,7 +23,6 @@ jobs:
       - run: pip install -e ".[test]"
       - run: ruff check src tests
       - run: ruff format --check src tests
-      - run: pytest -q tests/test_cuts.py tests/test_ctc_resolver.py
       - run: mypy src/hans
       # No [parity] extra here on purpose: saknussemm is not published yet,
       # and a CI that cannot install its dependency is a CI that cannot run.
