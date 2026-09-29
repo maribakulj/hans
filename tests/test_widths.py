@@ -130,8 +130,10 @@ def test_cross_fit_never_learns_from_the_line_it_resolves() -> None:
     resolver = LearnedWidthResolver(page)
     own = resolver.model_for("L1")  # fitted on L0, L2 -- clean
     other = resolver.model_for("L0")  # fitted on L1, L3 -- poisoned
-    assert own.glyph("i") == pytest.approx(4, abs=1e-3)
-    assert other.glyph("i") > 100
+    assert own.token("iii") == pytest.approx(12, abs=1e-2)
+    # the poison lands somewhere in the other model (on the per-word
+    # constant, as it happens); what matters is that it landed THERE
+    assert other.token("iii") > 100
 
 
 def test_cross_fit_refuses_duplicate_line_ids() -> None:

@@ -37,6 +37,15 @@ from hans.resolvers.proportional import is_space_token
 #: treated as noise. Nothing on a printed page is a twentieth of a letter.
 _FLOOR = 0.05
 
+#: The per-word constant of the fit. Some producers (ABBYY as exported to
+#: DjVu by the Internet Archive) give every word a box that includes the
+#: blank after it; without a constant, that blank is smeared over the
+#: letters and every short word comes out too narrow -- 0.7 character on
+#: the Newton of 1846, on most boundaries. With it, the fit puts the blank
+#: where it is: once per word. On producers whose boxes hug the ink it
+#: fits to about zero and changes nothing.
+INTERCEPT = ""
+
 
 @dataclass(frozen=True)
 class WidthModel:
@@ -52,7 +61,7 @@ class WidthModel:
     def token(self, token: str) -> float:
         if is_space_token(token):
             return len(token) * self.space
-        return sum(self.glyph(c) for c in token)
+        return self.glyphs.get(INTERCEPT, 0.0) + sum(self.glyph(c) for c in token)
 
     def relative(self) -> dict[str, float]:
         """The same model scaled so the median glyph is 1.0.
@@ -62,11 +71,11 @@ class WidthModel:
         against the median makes the space and every unseen glyph land on
         a sane default.
         """
-        values = sorted(self.glyphs.values())
+        values = sorted(v for c, v in self.glyphs.items() if c != INTERCEPT)
         scale = values[len(values) // 2] if values else self.unit
         if scale <= 0:
             scale = 1.0
-        out = {c: w / scale for c, w in self.glyphs.items()}
+        out = {c: w / scale for c, w in self.glyphs.items() if c != INTERCEPT}
         out[" "] = self.space / scale
         return out
 
@@ -112,7 +121,8 @@ def _least_squares(
     ridge = 1e-6 * max(1.0, sum(ata[i][i] for i in range(n)) / max(1, n))
     for i in range(n):
         ata[i][i] += ridge
-        atb[i] += ridge * unit  # shrink an unseen-ish glyph toward the mean
+        # shrink an unseen-ish glyph toward the mean, the constant toward 0
+        atb[i] += ridge * (0.0 if chars[i] == INTERCEPT else unit)
     beta = _solve(ata, atb)
     return dict(zip(chars, beta))
 
@@ -138,6 +148,7 @@ def learn_widths(lines: Iterable[ReferenceLine]) -> WidthModel:
             for c in word.text:
                 counts[_fold_char(c)] += 1
             if counts:
+                counts[INTERCEPT] = 1
                 rows.append((dict(counts), float(word.width)))
         for a, b in pairwise(line.words):
             gaps.append(float(b.hpos - a.right))
@@ -162,7 +173,9 @@ def learn_widths(lines: Iterable[ReferenceLine]) -> WidthModel:
         kept_chars = sorted({c for counts, _ in keep for c in counts})
         beta.update(_least_squares(kept_chars, keep, unit))
 
-    glyphs = {c: max(floor, v) for c, v in beta.items()}
+    glyphs = {
+        c: (max(0.0, v) if c == INTERCEPT else max(floor, v)) for c, v in beta.items()
+    }
     space = max(floor, median(gaps)) if gaps else 0.6 * unit
     return WidthModel(glyphs=glyphs, space=space, unit=unit)
 
