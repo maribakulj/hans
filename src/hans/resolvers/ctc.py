@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from hans.cuts import LineCuts, support, transfer
+from hans.cuts import LineCuts, learn_char_widths, support, transfer
 from hans.geometry import GeometryRequest, WordBox
 from hans.resolvers.proportional import ProportionalResolver
 
@@ -41,6 +41,7 @@ class CTCCutsResolver:
         *,
         name: str | None = None,
         fallback: object | None = None,
+        weighted_gaps: bool = False,
     ):
         self._cuts = cuts
         self.name = name or "ctc cuts (catmus-print)"
@@ -49,6 +50,7 @@ class CTCCutsResolver:
         # refusal as a failure instead would let the candidate improve its
         # worst case simply by declining every hard line.
         self._fallback = fallback or ProportionalResolver()
+        self._char_widths = learn_char_widths(cuts.values()) if weighted_gaps else None
         self.declined = 0
 
     @classmethod
@@ -80,4 +82,33 @@ class CTCCutsResolver:
         if support(read, "".join(request.tokens)) < self.MIN_SUPPORT:
             self.declined += 1
             return self._fallback.resolve(request)  # type: ignore[attr-defined,no-any-return]
-        return transfer(read, request.tokens, request.hpos, request.width)
+        return transfer(
+            read,
+            request.tokens,
+            request.hpos,
+            request.width,
+            char_widths=self._char_widths,
+        )
+
+
+class WeightedCTCCutsResolver(CTCCutsResolver):
+    """CTC cuts with document-learned relative character widths in gaps.
+
+    Matched characters keep their measured spans. Only unmatched runs are
+    redistributed, and only inside the same left/right anchors as the base
+    resolver. The learned model therefore cannot move reliable geometry.
+    """
+
+    def __init__(
+        self,
+        cuts: dict[str, LineCuts],
+        *,
+        name: str | None = None,
+        fallback: object | None = None,
+    ):
+        super().__init__(
+            cuts,
+            name=name or "ctc cuts + learned glyph widths",
+            fallback=fallback,
+            weighted_gaps=True,
+        )
