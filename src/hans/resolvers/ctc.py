@@ -54,7 +54,14 @@ class CTCCutsResolver:
         self.declined = 0
 
     @classmethod
-    def from_cache(cls, path: Path | str, **kw: str) -> CTCCutsResolver:
+    def from_cache(
+        cls,
+        path: Path | str,
+        *,
+        name: str | None = None,
+        fallback: object | None = None,
+        weighted_gaps: bool = False,
+    ) -> CTCCutsResolver:
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
         cuts = {
             line_id: LineCuts(
@@ -64,7 +71,12 @@ class CTCCutsResolver:
             )
             for line_id, entry in raw["lines"].items()
         }
-        return cls(cuts, **kw)
+        return cls(
+            cuts,
+            name=name,
+            fallback=fallback,
+            weighted_gaps=weighted_gaps,
+        )
 
     def __len__(self) -> int:
         return len(self._cuts)
@@ -105,10 +117,11 @@ class WeightedCTCCutsResolver(CTCCutsResolver):
         *,
         name: str | None = None,
         fallback: object | None = None,
+        weighted_gaps: bool = True,
     ):
         super().__init__(
             cuts,
             name=name or "ctc cuts + learned glyph widths",
             fallback=fallback,
-            weighted_gaps=True,
+            weighted_gaps=weighted_gaps,
         )
