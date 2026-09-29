@@ -9,7 +9,7 @@ import pytest
 
 from hans.cuts import LineCuts
 from hans.geometry import GeometryRequest, WordBox
-from hans.resolvers.ctc import CTCCutsResolver, MissingLine
+from hans.resolvers.ctc import CTCCutsResolver, MissingLine, WeightedCTCCutsResolver
 
 TOKENS = ("de", " ", "la")
 
@@ -91,3 +91,22 @@ def test_from_cache_round_trips_a_written_file(tmp_path: Path) -> None:
     resolver = CTCCutsResolver.from_cache(path)
     assert len(resolver) == 1
     assert resolver.resolve(_request())[0].text == "de"
+
+
+def test_weighted_resolver_learns_from_its_cache() -> None:
+    cuts = {
+        "train": LineCuts("train", "W i", ((0, 20), (20, 24), (24, 29))),
+        "L1": LineCuts(
+            "L1",
+            "a??ib",
+            ((0, 10), (10, 20), (20, 30), (30, 35), (35, 45)),
+        ),
+    }
+    request = GeometryRequest(
+        hpos=0, width=45, tokens=("aW", " ", "ib"), line_id="L1"
+    )
+    plain = CTCCutsResolver(cuts).resolve(request)
+    weighted = WeightedCTCCutsResolver(cuts).resolve(request)
+    assert weighted[1].width < plain[1].width
+    assert weighted[0].hpos == plain[0].hpos
+    assert weighted[-1].hpos + weighted[-1].width == 45
