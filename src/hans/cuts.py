@@ -86,24 +86,47 @@ def _fold_char(char: str) -> str:
 def learn_char_widths(reads: Iterable[LineCuts]) -> dict[str, float]:
     """Learn relative glyph widths from the recogniser's own character cuts.
 
-    Each line is normalised by its median positive character width before it
-    contributes samples. That removes point-size / scan-scale differences.
-    The model never predicts absolute pixels: interpolation already knows the
-    exact width between its anchors, and these values only divide that width.
+    **What a cut is, measured, not assumed.** On the BnF cache (538 lines,
+    2026-09-29) 84 % of the per-character cuts have a width of ZERO pixels
+    and every letter's median width is 0; only the space carries 4-5 px.
+    A CTC recogniser emits each character as a spike in one frame, so
+    ``rec.cuts`` holds where a glyph was *emitted*, not how wide it is.
+    Learning from ``x1 - x0`` therefore learns nothing: the first version
+    of this function produced 1.00 for every letter (``m`` = 0.75, ``h`` =
+    1.17, noise) and moved 0 boundaries out of 13 385 on three corpora.
+
+    What DOES carry the width is the advance from one spike to the next:
+    on the same cache, ``i``/``l`` come out at 0.67 of the line's median
+    advance, ``a``/``e`` at 1.1, ``m`` at 1.8, ``w`` at 1.9 -- the shape of
+    a typeface. So each character is measured by the distance to the start
+    of the next one, and the last character of a line by its own span
+    (which is exact when spans are contiguous, and zero -- hence skipped --
+    when they are spikes).
+
+    Each line is normalised by its median positive advance before it
+    contributes, which removes point size and scan scale. The model never
+    predicts absolute pixels: interpolation already knows the exact width
+    between its anchors, and these values only divide that width.
     """
     samples: dict[str, list[float]] = defaultdict(list)
     for read in reads:
-        widths = [max(0, x1 - x0) for x0, x1 in read.spans]
-        positive = [w for w in widths if w > 0]
+        spans = read.spans
+        advances = [
+            max(0, spans[k + 1][0] - spans[k][0])
+            if k + 1 < len(spans)
+            else max(0, spans[k][1] - spans[k][0])
+            for k in range(len(spans))
+        ]
+        positive = [a for a in advances if a > 0]
         if not positive:
             continue
         scale = float(median(positive))
         if scale <= 0:
             continue
-        for char, glyph_width in zip(read.text, widths):
-            if glyph_width <= 0:
+        for char, advance in zip(read.text, advances):
+            if advance <= 0:
                 continue
-            samples[_fold_char(char)].append(glyph_width / scale)
+            samples[_fold_char(char)].append(advance / scale)
     return {char: float(median(values)) for char, values in samples.items()}
 
 

@@ -108,3 +108,34 @@ def test_weighted_resolver_learns_from_its_cache() -> None:
     assert weighted[1].width < plain[1].width
     assert weighted[0].hpos == plain[0].hpos
     assert weighted[-1].hpos + weighted[-1].width == 45
+
+
+def test_weighted_resolver_loaded_from_cache_is_actually_weighted(
+    tmp_path: Path,
+) -> None:
+    """``from_cache`` must not override the subclass's default.
+
+    Constructed directly, the weighted variant learns; loaded from a cache
+    -- which is the only way a campaign ever builds it -- the first version
+    did not, and measured the base resolver under the candidate's name.
+    """
+    cache = {
+        "alto": "x.xml",
+        "lines": {
+            "train": {"text": "W i", "spans": [[0, 20], [20, 24], [24, 29]]},
+            "L1": {
+                "text": "a??ib",
+                "spans": [[0, 10], [10, 20], [20, 30], [30, 35], [35, 45]],
+            },
+        },
+    }
+    path = tmp_path / "cuts.json"
+    path.write_text(json.dumps(cache), encoding="utf-8")
+    request = GeometryRequest(hpos=0, width=45, tokens=("aW", " ", "ib"), line_id="L1")
+    plain = CTCCutsResolver.from_cache(path).resolve(request)
+    weighted = WeightedCTCCutsResolver.from_cache(path).resolve(request)
+    assert weighted[1].width < plain[1].width
+    assert (
+        CTCCutsResolver.from_cache(path, weighted_gaps=True).resolve(request)
+        == weighted
+    )

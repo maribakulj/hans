@@ -60,8 +60,17 @@ class CTCCutsResolver:
         *,
         name: str | None = None,
         fallback: object | None = None,
-        weighted_gaps: bool = False,
+        weighted_gaps: bool | None = None,
     ) -> CTCCutsResolver:
+        """Load a cut cache written by ``tools/decode_lines.py``.
+
+        ``weighted_gaps`` is forwarded only when given: the first version
+        passed ``False`` through by default, which silently overrode the
+        subclass's ``True`` -- ``WeightedCTCCutsResolver.from_cache`` built
+        an UNWEIGHTED resolver, and the campaign measured the base resolver
+        twice while calling one of them the candidate (0 boundaries moved
+        out of 13 946, 2026-09-29). A test now pins the loaded variant.
+        """
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
         cuts = {
             line_id: LineCuts(
@@ -71,12 +80,8 @@ class CTCCutsResolver:
             )
             for line_id, entry in raw["lines"].items()
         }
-        return cls(
-            cuts,
-            name=name,
-            fallback=fallback,
-            weighted_gaps=weighted_gaps,
-        )
+        extra = {} if weighted_gaps is None else {"weighted_gaps": weighted_gaps}
+        return cls(cuts, name=name, fallback=fallback, **extra)
 
     def __len__(self) -> int:
         return len(self._cuts)
