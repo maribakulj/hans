@@ -42,9 +42,15 @@ class CTCCutsResolver:
         name: str | None = None,
         fallback: object | None = None,
         weighted_gaps: bool = False,
+        last_resort: bool = False,
     ):
         self._cuts = cuts
         self.name = name or "ctc cuts (catmus-print)"
+        #: Read by saknussemm's seam (PR #167): ``True`` means "ask me only
+        #: when the page's own boxes cannot answer the line" -- no kept
+        #: word, or a layout the anchored tier cannot draw. On 95-99 % of
+        #: lines (H22) the page answers and the model is never consulted.
+        self.last_resort = last_resort
         # What the SEAM does when a resolver declines, reproduced here so the
         # bench measures the thing that would actually ship. Scoring a
         # refusal as a failure instead would let the candidate improve its
@@ -61,6 +67,7 @@ class CTCCutsResolver:
         name: str | None = None,
         fallback: object | None = None,
         weighted_gaps: bool | None = None,
+        last_resort: bool = False,
     ) -> CTCCutsResolver:
         """Load a cut cache written by ``tools/decode_lines.py``.
 
@@ -81,7 +88,7 @@ class CTCCutsResolver:
             for line_id, entry in raw["lines"].items()
         }
         extra = {} if weighted_gaps is None else {"weighted_gaps": weighted_gaps}
-        return cls(cuts, name=name, fallback=fallback, **extra)
+        return cls(cuts, name=name, fallback=fallback, last_resort=last_resort, **extra)
 
     def __len__(self) -> int:
         return len(self._cuts)
@@ -123,10 +130,12 @@ class WeightedCTCCutsResolver(CTCCutsResolver):
         name: str | None = None,
         fallback: object | None = None,
         weighted_gaps: bool = True,
+        last_resort: bool = False,
     ):
         super().__init__(
             cuts,
             name=name or "ctc cuts + learned glyph widths",
             fallback=fallback,
             weighted_gaps=weighted_gaps,
+            last_resort=last_resort,
         )

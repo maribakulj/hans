@@ -139,3 +139,19 @@ def test_weighted_resolver_loaded_from_cache_is_actually_weighted(
         CTCCutsResolver.from_cache(path, weighted_gaps=True).resolve(request)
         == weighted
     )
+
+
+def test_last_resort_is_carried_for_saknussemms_seam(tmp_path: Path) -> None:
+    cuts = {
+        "L1": LineCuts("L1", "de la", ((0, 5), (5, 10), (10, 12), (12, 17), (17, 22)))
+    }
+    assert CTCCutsResolver(cuts).last_resort is False
+    assert CTCCutsResolver(cuts, last_resort=True).last_resort is True
+    path = tmp_path / "cuts.json"
+    path.write_text(
+        json.dumps(
+            {"alto": "x", "lines": {"L1": {"text": "de la", "spans": [[0, 5]] * 5}}}
+        ),
+        encoding="utf-8",
+    )
+    assert CTCCutsResolver.from_cache(path, last_resort=True).last_resort is True
