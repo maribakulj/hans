@@ -102,9 +102,7 @@ def test_weighted_resolver_learns_from_its_cache() -> None:
             ((0, 10), (10, 20), (20, 30), (30, 35), (35, 45)),
         ),
     }
-    request = GeometryRequest(
-        hpos=0, width=45, tokens=("aW", " ", "ib"), line_id="L1"
-    )
+    request = GeometryRequest(hpos=0, width=45, tokens=("aW", " ", "ib"), line_id="L1")
     plain = CTCCutsResolver(cuts).resolve(request)
     weighted = WeightedCTCCutsResolver(cuts).resolve(request)
     assert weighted[1].width < plain[1].width
