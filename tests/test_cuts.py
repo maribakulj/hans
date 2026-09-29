@@ -12,7 +12,7 @@ from itertools import pairwise
 
 import pytest
 
-from hans.cuts import LineCuts, support, transfer
+from hans.cuts import LineCuts, learn_char_widths, support, transfer
 
 # "de la" read perfectly: one span per character, ink-tight.
 READ = LineCuts(
@@ -141,3 +141,39 @@ def test_support_sees_fraktur_coming_but_only_just() -> None:
     read = LineCuts("L1", read_text, tuple((i, i + 1) for i in range(len(read_text))))
     s = support(read, alto)
     assert 0.5 <= s < 0.7, s
+
+
+def test_character_width_learning_is_scale_invariant() -> None:
+    reads = [
+        LineCuts("small", "Wi", ((0, 20), (20, 25))),
+        LineCuts("large", "Wi", ((0, 40), (40, 50))),
+    ]
+    widths = learn_char_widths(reads)
+    assert widths["w"] == pytest.approx(1.6)
+    assert widths["i"] == pytest.approx(0.4)
+    assert widths["w"] / widths["i"] == pytest.approx(4.0)
+
+
+def test_weighted_gap_moves_only_the_boundary_inside_the_same_anchors() -> None:
+    """Wide inserted glyphs should get more of an uncertain interval.
+
+    The recogniser anchors ``a`` at [0,10] and ``ib`` at [30,45].  The
+    corrected text inserts ``W `` between them. Equal interpolation gives
+    W and the space 10 px each; learned widths 4:1 give 16 px and 4 px.
+    The outer anchors themselves must not move.
+    """
+    read = LineCuts(
+        "L1",
+        "a??ib",
+        ((0, 10), (10, 20), (20, 30), (30, 35), (35, 45)),
+    )
+    tokens = ("aW", " ", "ib")
+    plain = transfer(read, tokens, 0, 45)
+    weighted = transfer(
+        read, tokens, 0, 45, char_widths={"w": 4.0, " ": 1.0}
+    )
+
+    assert (plain[1].hpos, plain[1].width) == (20, 10)
+    assert (weighted[1].hpos, weighted[1].width) == (26, 4)
+    assert weighted[0].hpos == plain[0].hpos == 0
+    assert weighted[-1].hpos + weighted[-1].width == 45
