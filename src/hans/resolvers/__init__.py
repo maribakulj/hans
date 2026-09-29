@@ -8,9 +8,9 @@ from hans.resolvers.tesseract import TesseractWordsResolver
 
 __all__ = [
     "CTCCutsResolver",
-    "WeightedCTCCutsResolver",
     "InkGapResolver",
     "InkSnapResolver",
     "ProportionalResolver",
     "TesseractWordsResolver",
+    "WeightedCTCCutsResolver",
 ]
