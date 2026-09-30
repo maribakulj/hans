@@ -1209,3 +1209,23 @@ rien, il ne gagnait rien. Appelé aussi quand l'ancré a *supposé* (mot
 inséré, fragment étendu — `AnchoredLayout.guessed`) : 153 appels au lieu de
 482, 91,7 %. Le résolveur de hans lève (`LowSupport`) au lieu de rendre le
 prorata quand il est en dernier recours.
+
+### 2026-09-30 (suite 2) — H25 : PAGE garde ses `Word` ; la boucle s'arrête
+
+Troisième objectif du mandat. Le chemin lent de PAGE supprimait tous les
+`Word` d'une ligne dès que le compte de mots changeait (spec §6.2 P4 :
+inventer des polygones sur une ligne inclinée serait un mensonge). Ils ne
+sont pas inventés : un mot gardé garde son élément et ses `Coords`, un mot
+scindé est son propre polygone coupé par une verticale, une fusion ou un
+mot inséré prennent le polygone de la ligne entre deux abscisses.
+`formats/page/_words.py`, branche `page-mots-gardes`. De bout en bout
+(`tools/campagne_locale.py`, bras PAGE) : **98,8 %** sur la vérité terrain
+NewsEye, **96,2 %** sur OCR17+. Rapport `docs/H25.md`.
+
+**Cette PR n'est pas mergée par la boucle** : elle réécrit une règle
+normative de la spécification. Règle 2 — ne jamais trancher seul un
+arbitrage de conception.
+
+**La boucle s'arrête : les trois objectifs du mandat sont mesurés et
+écrits.** H23 (demi-ligne, garde en option, mergée), H24 (test réel,
+deux corrections mergées, CTC en dernier recours), H25 (PAGE, en attente).

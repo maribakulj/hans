@@ -11,9 +11,10 @@ Cinq bras par corpus, tous aveugles aux pixels :
     locale, apprise     idem, avec les largeurs apprises sur les boîtes de
                         la page (cross-fit par parité, jamais la ligne jugée)
     locale 3, apprise   trois mots voisins fusionnés, largeurs apprises
-    saknussemm PR #167  le VRAI chemin : fichier corrompu (deux mots collés
+    saknussemm          le VRAI chemin : fichier corrompu (deux mots collés
                         dans le XML), correction, réécriture par
-                        ``rewrite_alto_file``, boîtes relues — ALTO seulement
+                        ``rewrite_alto_file`` ou ``rewrite_page_file``,
+                        boîtes relues — ALTO et PAGE
 
 Lecteurs : ALTO (``read_lines``), PAGE (``read_page_lines``), DjVu XML
 d'Internet Archive (``read_djvu_lines``, 60 premières pages).
@@ -195,12 +196,138 @@ def _e2e(
     return errors, normalised, failures, len(glued)
 
 
+def _page_glue(root: etree._Element, case: MergeCase) -> bool:
+    """PAGE : colle deux ``Word`` voisins — un seul élément, l'union comme polygone."""
+    for el in root.iter():
+        if _local(el) != "TextLine" or (el.get("id") or el.get("ID")) != case.line_id:
+            continue
+        words = [c for c in el if _local(c) == "Word"]
+        i = case.first_index
+        if i + 1 >= len(words):
+            return False
+        a, b = words[i], words[i + 1]
+
+        def pts(w: etree._Element) -> list[tuple[int, int]]:
+            raw = next(c.get("points") for c in w if _local(c) == "Coords")
+            return [
+                (int(float(x)), int(float(y)))
+                for x, y in (p.split(",") for p in raw.split())
+            ]
+
+        both = pts(a) + pts(b)
+        xs, ys = [p[0] for p in both], [p[1] for p in both]
+        box = f"{min(xs)},{min(ys)} {max(xs)},{min(ys)} {max(xs)},{max(ys)} {min(xs)},{max(ys)}"
+        next(c for c in a if _local(c) == "Coords").set("points", box)
+        for te in a.iter():
+            if _local(te) == "Unicode":
+                te.text = case.source_content
+        el.remove(b)
+        # le texte de ligne suit ses mots, comme un producteur l'aurait écrit
+        glued = " ".join(
+            next((u.text or "" for u in w.iter() if _local(u) == "Unicode"), "")
+            for w in el
+            if _local(w) == "Word"
+        )
+        for te in el:
+            if _local(te) == "TextEquiv":
+                for u in te:
+                    if _local(u) == "Unicode":
+                        u.text = glued
+        return True
+    return False
+
+
+def _e2e_page(
+    path: Path, lines: list[ReferenceLine], cases: list[MergeCase]
+) -> tuple[list[float], list[float], int, int] | None:
+    """Le chemin de production de saknussemm sur un PAGE corrompu (voir ``_e2e``)."""
+    try:
+        from saknussemm.formats.loader import (
+            adapter_for_format,
+            build_document_manifest,
+        )
+    except ImportError:
+        return None
+    ids = [ln.line_id for ln in lines]
+    if len(set(ids)) != len(ids):
+        return None
+    per_line: dict[str, list[MergeCase]] = {}
+    for case in cases:
+        per_line.setdefault(case.line_id, []).append(case)
+    step = max(4, len(per_line) // E2E_LINES)
+    chosen = [g[k % len(g)] for k, g in enumerate(per_line.values()) if k % step == 0][
+        :E2E_LINES
+    ]
+    tree = etree.parse(str(path))
+    glued = [c for c in chosen if _page_glue(tree.getroot(), c)]
+    if not glued:
+        return None
+    tmp = Path(__file__).resolve().parent.parent / ".e2e_tmp"
+    tmp.mkdir(exist_ok=True)
+    corrupted = tmp / path.name
+    tree.write(str(corrupted), xml_declaration=True, encoding=tree.docinfo.encoding)
+    truth = {ln.line_id: ln for ln in lines}
+    wanted = {c.line_id: c for c in glued}
+    try:
+        doc = build_document_manifest([(corrupted, corrupted.name)])
+        for page in doc.pages:
+            for lm in page.lines:
+                if lm.line_id in wanted:
+                    lm.corrected_text = " ".join(
+                        w.text for w in truth[lm.line_id].words
+                    )
+                else:
+                    lm.corrected_text = lm.ocr_text
+        out = adapter_for_format(doc.source_format).rewrite_file(
+            corrupted, doc.pages, "hans", "campagne-locale"
+        )
+        result = etree.fromstring(out.xml_bytes)
+    except Exception as exc:  # noqa: BLE001
+        print(
+            f"    bout en bout PAGE impossible sur {path.name} : {type(exc).__name__}: {exc}"
+        )
+        return None
+    finally:
+        corrupted.unlink(missing_ok=True)
+    errors: list[float] = []
+    normalised: list[float] = []
+    failures = 0
+    for el in result.iter():
+        lid = el.get("id") or el.get("ID")
+        if _local(el) != "TextLine" or lid not in wanted:
+            continue
+        case = wanted[lid]
+        words = [c for c in el if _local(c) == "Word"]
+        i = case.first_index
+        if i + 1 >= len(words) or len(words) != len(truth[lid].words):
+            failures += 1
+            continue
+
+        def xs(w: etree._Element) -> tuple[int, int]:
+            raw = next(c.get("points") for c in w if _local(c) == "Coords")
+            v = [int(float(p.split(",")[0])) for p in raw.split()]
+            return min(v), max(v)
+
+        mid = (xs(words[i])[1] + xs(words[i + 1])[0]) / 2
+        start, end = case.gaps[0]
+        err = interval_distance((mid, mid), (float(start), float(end)))
+        errors.append(err)
+        if case.mean_char_width > 0:
+            normalised.append(err / case.mean_char_width)
+    if not errors:
+        print(
+            f"    PAGE {path.name} : aucune ligne reconstruite ({failures} lignes sans mots en sortie)"
+        )
+        return None
+    return errors, normalised, failures, len(glued)
+
+
 def _pool(parts: list[tuple[list[float], list[float], int, int]]) -> Report:
     errors = [e for p in parts for e in p[0]]
     normalised = [n for p in parts for n in p[1]]
     ordered = sorted(errors)
     return Report(
-        resolver="saknussemm PR #167",
+        resolver="saknussemm, bout en bout",
         cases=sum(p[3] for p in parts),
         boundaries=len(errors),
         failures=sum(p[2] for p in parts),
@@ -335,10 +462,16 @@ def main(argv: list[str] | None = None) -> int:
             arms["locale, prorata"].append((ProportionalResolver(), two))
             arms["locale, apprise"].append((learned, two))
             arms["locale 3, apprise"].append((learned, three))
-            if entry.get("reader", "alto") == "alto":
-                part = _e2e(f, lines, two)
-                if part is not None:
-                    e2e_parts.append(part)
+            kind = entry.get("reader", "alto")
+            part = (
+                _e2e(f, lines, two)
+                if kind == "alto"
+                else _e2e_page(f, lines, two)
+                if kind == "page"
+                else None
+            )
+            if part is not None:
+                e2e_parts.append(part)
         if not arms["locale, prorata"]:
             print(f"\n### {name} : rien à mesurer")
             continue
@@ -359,10 +492,10 @@ def main(argv: list[str] | None = None) -> int:
             results[name][arm] = r.__dict__
         if e2e_parts:
             pooled = _pool(e2e_parts)
-            print(_row("saknussemm PR #167 (bout en bout)", pooled))
+            print(_row("saknussemm, vrai rewriter (bout en bout)", pooled))
             results[name]["saknussemm"] = pooled.__dict__
         else:
-            print(_row("saknussemm PR #167 (bout en bout)", None))
+            print(_row("saknussemm, vrai rewriter (bout en bout)", None))
     if args.json:
         args.json.write_text(json.dumps(results, indent=1, ensure_ascii=False))
     return 0
