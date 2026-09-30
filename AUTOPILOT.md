@@ -4,7 +4,7 @@ Ce fichier est **l'état**, pas un compte rendu. Une session réveillée n'a pas
 mon contexte : elle a ce fichier, le dépôt, et rien d'autre. Si les deux se
 contredisent, **le code gagne** et ce fichier est corrigé.
 
-Dernière mise à jour : 2026-09-29.
+Dernière mise à jour : 2026-09-30.
 
 ---
 
@@ -1164,3 +1164,23 @@ dans *cette* justification, que la page ne sait pas — le seul cas où le
 CTC apporterait quelque chose. Question ouverte du mainteneur : le CTC en
 dernier recours seulement, quand l'ancrage échoue ou n'a aucune ancre —
 c'est une inversion d'ordre des étages de `_resolve_geometry`, **C**.
+
+### 2026-09-30 — H23 : la demi-ligne inventée (VR-12), mesurée ; un garde en option
+
+Mandat du mainteneur : boucle autonome sur trois objectifs — la demi-ligne,
+le test réel NewsEye, le format PAGE. Entre-temps : hans PR #1 mergée,
+saknussemm #166 à #169 mergées, huit branches obsolètes supprimées.
+
+29 runs de H20, 32 470 lignes changées, **6 077 corrections distinctes**
+(les bras corrigent les mêmes pages : compter les lignes aurait compté la
+même sortie quatre fois). Deux définitions de « mot sans appui » écartées
+par la mesure avant la troisième : par sac de mots le cas fondateur vaut 1
+(ses mots inventés existent plus loin dans la source) ; dans l'ordre avec
+toute plage commune, 2 ( s'ancre sur  par des
+lettres éparses) ; dans l'ordre avec des plages d'au moins trois
+caractères, 5. À « suite > 2 » : 46 corrections arrêtées, **les 25
+fautives et 18 justes**, CER inchangé. Les fautives sont des débuts de
+phrase recommencés en tête de ligne ; les justes, des fins de ligne que
+l'OCR avait coupées et que le modèle lit sur l'image. Rien dans le texte ne
+les sépare. Donc un garde **en option** dans saknussemm (PR #170,
+,  par défaut). Rapport .
