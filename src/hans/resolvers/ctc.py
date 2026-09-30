@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from hans.cuts import LineCuts, support, transfer
+from hans.cuts import LineCuts, learn_char_widths, support, transfer
 from hans.geometry import GeometryRequest, WordBox
 from hans.resolvers.proportional import ProportionalResolver
 
@@ -41,18 +41,43 @@ class CTCCutsResolver:
         *,
         name: str | None = None,
         fallback: object | None = None,
+        weighted_gaps: bool = False,
+        last_resort: bool = False,
     ):
         self._cuts = cuts
         self.name = name or "ctc cuts (catmus-print)"
+        #: Read by saknussemm's seam (PR #167): ``True`` means "ask me only
+        #: when the page's own boxes cannot answer the line" -- no kept
+        #: word, or a layout the anchored tier cannot draw. On 95-99 % of
+        #: lines (H22) the page answers and the model is never consulted.
+        self.last_resort = last_resort
         # What the SEAM does when a resolver declines, reproduced here so the
         # bench measures the thing that would actually ship. Scoring a
         # refusal as a failure instead would let the candidate improve its
         # worst case simply by declining every hard line.
         self._fallback = fallback or ProportionalResolver()
+        self._char_widths = learn_char_widths(cuts.values()) if weighted_gaps else None
         self.declined = 0
 
     @classmethod
-    def from_cache(cls, path: Path | str, **kw: str) -> CTCCutsResolver:
+    def from_cache(
+        cls,
+        path: Path | str,
+        *,
+        name: str | None = None,
+        fallback: object | None = None,
+        weighted_gaps: bool | None = None,
+        last_resort: bool = False,
+    ) -> CTCCutsResolver:
+        """Load a cut cache written by ``tools/decode_lines.py``.
+
+        ``weighted_gaps`` is forwarded only when given: the first version
+        passed ``False`` through by default, which silently overrode the
+        subclass's ``True`` -- ``WeightedCTCCutsResolver.from_cache`` built
+        an UNWEIGHTED resolver, and the campaign measured the base resolver
+        twice while calling one of them the candidate (0 boundaries moved
+        out of 13 946, 2026-09-29). A test now pins the loaded variant.
+        """
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
         cuts = {
             line_id: LineCuts(
@@ -62,7 +87,8 @@ class CTCCutsResolver:
             )
             for line_id, entry in raw["lines"].items()
         }
-        return cls(cuts, **kw)
+        extra = {} if weighted_gaps is None else {"weighted_gaps": weighted_gaps}
+        return cls(cuts, name=name, fallback=fallback, last_resort=last_resort, **extra)
 
     def __len__(self) -> int:
         return len(self._cuts)
@@ -80,4 +106,36 @@ class CTCCutsResolver:
         if support(read, "".join(request.tokens)) < self.MIN_SUPPORT:
             self.declined += 1
             return self._fallback.resolve(request)  # type: ignore[attr-defined,no-any-return]
-        return transfer(read, request.tokens, request.hpos, request.width)
+        return transfer(
+            read,
+            request.tokens,
+            request.hpos,
+            request.width,
+            char_widths=self._char_widths,
+        )
+
+
+class WeightedCTCCutsResolver(CTCCutsResolver):
+    """CTC cuts with document-learned relative character widths in gaps.
+
+    Matched characters keep their measured spans. Only unmatched runs are
+    redistributed, and only inside the same left/right anchors as the base
+    resolver. The learned model therefore cannot move reliable geometry.
+    """
+
+    def __init__(
+        self,
+        cuts: dict[str, LineCuts],
+        *,
+        name: str | None = None,
+        fallback: object | None = None,
+        weighted_gaps: bool = True,
+        last_resort: bool = False,
+    ):
+        super().__init__(
+            cuts,
+            name=name or "ctc cuts + learned glyph widths",
+            fallback=fallback,
+            weighted_gaps=weighted_gaps,
+            last_resort=last_resort,
+        )

@@ -23,8 +23,11 @@ loop's CI, stay installable without a 2 GB wheel.
 from __future__ import annotations
 
 import unicodedata
+from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from difflib import SequenceMatcher
+from statistics import median
 
 from hans.geometry import WordBox
 
@@ -80,6 +83,53 @@ def _fold_char(char: str) -> str:
     return base[0] if base else char
 
 
+def learn_char_widths(reads: Iterable[LineCuts]) -> dict[str, float]:
+    """Learn relative glyph widths from the recogniser's own character cuts.
+
+    **What a cut is, measured, not assumed.** On the BnF cache (538 lines,
+    2026-09-29) 84 % of the per-character cuts have a width of ZERO pixels
+    and every letter's median width is 0; only the space carries 4-5 px.
+    A CTC recogniser emits each character as a spike in one frame, so
+    ``rec.cuts`` holds where a glyph was *emitted*, not how wide it is.
+    Learning from ``x1 - x0`` therefore learns nothing: the first version
+    of this function produced 1.00 for every letter (``m`` = 0.75, ``h`` =
+    1.17, noise) and moved 0 boundaries out of 13 385 on three corpora.
+
+    What DOES carry the width is the advance from one spike to the next:
+    on the same cache, ``i``/``l`` come out at 0.67 of the line's median
+    advance, ``a``/``e`` at 1.1, ``m`` at 1.8, ``w`` at 1.9 -- the shape of
+    a typeface. So each character is measured by the distance to the start
+    of the next one, and the last character of a line by its own span
+    (which is exact when spans are contiguous, and zero -- hence skipped --
+    when they are spikes).
+
+    Each line is normalised by its median positive advance before it
+    contributes, which removes point size and scan scale. The model never
+    predicts absolute pixels: interpolation already knows the exact width
+    between its anchors, and these values only divide that width.
+    """
+    samples: dict[str, list[float]] = defaultdict(list)
+    for read in reads:
+        spans = read.spans
+        advances = [
+            max(0, spans[k + 1][0] - spans[k][0])
+            if k + 1 < len(spans)
+            else max(0, spans[k][1] - spans[k][0])
+            for k in range(len(spans))
+        ]
+        positive = [a for a in advances if a > 0]
+        if not positive:
+            continue
+        scale = float(median(positive))
+        if scale <= 0:
+            continue
+        for char, advance in zip(read.text, advances):
+            if advance <= 0:
+                continue
+            samples[_fold_char(char)].append(advance / scale)
+    return {char: float(median(values)) for char, values in samples.items()}
+
+
 def support(read: LineCuts, target: str) -> float:
     """Share of ``target`` the recogniser's reading can actually anchor.
 
@@ -114,7 +164,11 @@ def _char_positions(read: LineCuts, target: str) -> list[tuple[float, float] | N
 
 
 def _fill_gaps(
-    positions: list[tuple[float, float] | None], hpos: int, width: int
+    positions: list[tuple[float, float] | None],
+    hpos: int,
+    width: int,
+    target: str,
+    char_widths: Mapping[str, float] | None = None,
 ) -> list[tuple[float, float]]:
     """Interpolate the characters the alignment could not place.
 
@@ -142,15 +196,37 @@ def _fill_gaps(
         start = positions[i - 1][1] if i > 0 else left  # type: ignore[index]
         end = positions[j][0] if j < n else right  # type: ignore[index]
         end = max(end, start)
-        step = (end - start) / (j - i)
-        for k in range(j - i):
-            filled.append((start + k * step, start + (k + 1) * step))
+        count = j - i
+
+        # Without a model this is exactly the old equal-step interpolation.
+        # With a model, only the division INSIDE the anchored interval changes.
+        weights = (
+            [
+                max(0.05, float(char_widths.get(_fold_char(target[k]), 1.0)))
+                for k in range(i, j)
+            ]
+            if char_widths
+            else [1.0] * count
+        )
+        total = sum(weights)
+        cursor = start
+        cumulative = 0.0
+        for weight in weights:
+            cumulative += weight
+            nxt = start + (end - start) * cumulative / total
+            filled.append((cursor, nxt))
+            cursor = nxt
         i = j
     return filled
 
 
 def transfer(
-    read: LineCuts, tokens: tuple[str, ...], hpos: int, width: int
+    read: LineCuts,
+    tokens: tuple[str, ...],
+    hpos: int,
+    width: int,
+    *,
+    char_widths: Mapping[str, float] | None = None,
 ) -> tuple[WordBox, ...]:
     """Boxes for ``tokens``, built from where the recogniser saw characters.
 
@@ -166,7 +242,9 @@ def transfer(
     keeps it from contradicting them.
     """
     target = "".join(tokens)
-    positions = _fill_gaps(_char_positions(read, target), hpos, width)
+    positions = _fill_gaps(
+        _char_positions(read, target), hpos, width, target, char_widths
+    )
 
     # 1. word extents from their own characters
     bounds: list[tuple[float, float] | None] = []

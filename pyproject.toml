@@ -60,5 +60,13 @@ strict = true
 python_version = "3.11"
 files = ["src/hans"]
 
+# saknussemm is imported by name in bench.py and campaign.py (the --strict
+# probe) and is not installable in CI: the package is unpublished. PIL is a
+# lazy import in triage.py and is not in the [test] extra either. Without
+# this, mypy has been red on main since 2026-09-25 (import-not-found).
+[[tool.mypy.overrides]]
+module = ["PIL.*", "saknussemm.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

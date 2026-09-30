@@ -217,3 +217,57 @@ def read_page_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLi
             )
         )
     return lines
+
+
+def read_djvu_lines(
+    path: Path | str, *, min_words: int = 2, max_pages: int | None = None
+) -> list[ReferenceLine]:
+    """Les lignes d'un DjVu XML (Internet Archive), avec la géométrie des ``WORD``.
+
+    Même contrat que :func:`read_lines`. Le format est celui du ``_djvu.xml``
+    d'un livre entier : ``OBJECT`` (page) > ``PARAGRAPH`` > ``LINE`` > ``WORD``
+    avec ``coords="x0,y1,x1,y0"`` (le bas AVANT le haut, c'est la convention
+    du format). Les identifiants de ligne sont fabriqués ``p<page>-l<n>`` :
+    le format n'en porte aucun, et le banc en a besoin pour tenir un
+    résolveur par ligne.
+    """
+    lines: list[ReferenceLine] = []
+    page_no = 0
+    for _, page in etree.iterparse(str(path), events=("end",), tag="OBJECT"):
+        page_no += 1
+        if max_pages is not None and page_no > max_pages:
+            break
+        n = 0
+        for el in page.iter("LINE"):
+            words: list[WordBox] = []
+            broken = False
+            for w in el.iter("WORD"):
+                try:
+                    x0, _y1, x1, _y0 = (
+                        int(float(v)) for v in (w.get("coords") or "").split(",")
+                    )
+                except ValueError:
+                    broken = True
+                    break
+                text = (w.text or "").strip()
+                if not text or x1 <= x0:
+                    broken = True
+                    break
+                words.append(WordBox(text=text, hpos=x0, width=x1 - x0))
+            if broken or len(words) < min_words:
+                continue
+            if any(b.hpos < a.hpos for a, b in pairwise(words)):
+                continue
+            n += 1
+            lines.append(
+                ReferenceLine(
+                    line_id=f"p{page_no}-l{n}",
+                    hpos=words[0].hpos,
+                    vpos=0,
+                    width=words[-1].right - words[0].hpos,
+                    height=0,
+                    words=tuple(words),
+                )
+            )
+        page.clear()
+    return lines
