@@ -1176,11 +1176,11 @@ saknussemm #166 à #169 mergées, huit branches obsolètes supprimées.
 même sortie quatre fois). Deux définitions de « mot sans appui » écartées
 par la mesure avant la troisième : par sac de mots le cas fondateur vaut 1
 (ses mots inventés existent plus loin dans la source) ; dans l'ordre avec
-toute plage commune, 2 ( s'ancre sur  par des
+toute plage commune, 2 (`impérialisme` s'ancre sur `rationaliste` par des
 lettres éparses) ; dans l'ordre avec des plages d'au moins trois
 caractères, 5. À « suite > 2 » : 46 corrections arrêtées, **les 25
 fautives et 18 justes**, CER inchangé. Les fautives sont des débuts de
 phrase recommencés en tête de ligne ; les justes, des fins de ligne que
 l'OCR avait coupées et que le modèle lit sur l'image. Rien dans le texte ne
 les sépare. Donc un garde **en option** dans saknussemm (PR #170,
-,  par défaut). Rapport .
+`max_unanchored_words`, `None` par défaut). Rapport `docs/H23.md`.
