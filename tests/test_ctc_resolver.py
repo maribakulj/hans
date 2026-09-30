@@ -9,7 +9,12 @@ import pytest
 
 from hans.cuts import LineCuts
 from hans.geometry import GeometryRequest, WordBox
-from hans.resolvers.ctc import CTCCutsResolver, MissingLine, WeightedCTCCutsResolver
+from hans.resolvers.ctc import (
+    CTCCutsResolver,
+    LowSupport,
+    MissingLine,
+    WeightedCTCCutsResolver,
+)
 
 TOKENS = ("de", " ", "la")
 
@@ -155,3 +160,14 @@ def test_last_resort_is_carried_for_saknussemms_seam(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert CTCCutsResolver.from_cache(path, last_resort=True).last_resort is True
+
+
+def test_a_last_resort_resolver_declines_out_loud_instead_of_falling_back() -> None:
+    """Below the support threshold the default resolver hands back the
+    proportional layout; asked as a last resort it must raise, so that the
+    caller keeps the layout it already had."""
+    cuts = {"L1": LineCuts("L1", "zzzzz", tuple((i, i + 1) for i in range(5)))}
+    request = GeometryRequest(hpos=0, width=50, tokens=("de", " ", "la"), line_id="L1")
+    assert len(CTCCutsResolver(cuts).resolve(request)) == 3
+    with pytest.raises(LowSupport):
+        CTCCutsResolver(cuts, last_resort=True).resolve(request)

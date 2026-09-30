@@ -21,6 +21,10 @@ from hans.geometry import GeometryRequest, WordBox
 from hans.resolvers.proportional import ProportionalResolver
 
 
+class LowSupport(LookupError):
+    """The recogniser's reading anchors too little of the target to be trusted."""
+
+
 class MissingLine(LookupError):
     """The cache has nothing for this line."""
 
@@ -105,6 +109,12 @@ class CTCCutsResolver:
             raise MissingLine(request.line_id)
         if support(read, "".join(request.tokens)) < self.MIN_SUPPORT:
             self.declined += 1
+            if self.last_resort:
+                # Asked as a last resort, the caller already holds a layout
+                # of its own (saknussemm's anchored one); handing back the
+                # proportional layout of the whole line would replace it
+                # with something worse. Declining out loud lets it keep it.
+                raise LowSupport(request.line_id)
             return self._fallback.resolve(request)  # type: ignore[attr-defined,no-any-return]
         return transfer(
             read,

@@ -1184,3 +1184,28 @@ phrase recommencés en tête de ligne ; les justes, des fins de ligne que
 l'OCR avait coupées et que le modèle lit sur l'image. Rien dans le texte ne
 les sépare. Donc un garde **en option** dans saknussemm (PR #170,
 `max_unanchored_words`, `None` par défaut). Rapport `docs/H23.md`.
+
+### 2026-09-30 (suite) — H24 : le test réel, deux défauts de la source, et le CTC quand la page suppose
+
+Tesseract (3 pages NewsEye) corrigé par le texte de la vérité terrain,
+jugé sur les boîtes au mot de cette vérité terrain — un autre producteur.
+1 268 lignes appariées une à une sur 2 145 (41 % sortent du domaine par la
+seule segmentation en lignes), 6 335 frontières. `tools/newseye_reel.py`,
+rapport `docs/H24.md`.
+
+Chemin lent : 50,8 % avant, **89,5 %** ancré, 92,7 % pour le CTC. Sous
+15 % d'erreurs OCR : 97,6–98,2 % contre 98,2–98,4 %. Semi-bouillie
+(15–30 %) : 95,0 % contre 96,7 %. Au-delà de 30 %, plus rien ne tient.
+
+**Règle 4, deux fois, sur les lignes propres encore fautives** : ce
+n'étaient pas des erreurs de répartition mais des défauts de la source que
+l'ancré propageait — des boîtes Tesseract qui débordent sur le mot suivant
+(le bord gauche du suivant est juste), et des mots boxés comme un fragment
+(sept pixels autour d'une virgule, le mot dans le « blanc » d'à côté).
+Corrigés dans saknussemm (PR #171) : 87,0 → 89,5 % sur le chemin lent.
+
+**Le CTC en dernier recours.** Appelé seulement quand l'ancré ne rend
+rien, il ne gagnait rien. Appelé aussi quand l'ancré a *supposé* (mot
+inséré, fragment étendu — `AnchoredLayout.guessed`) : 153 appels au lieu de
+482, 91,7 %. Le résolveur de hans lève (`LowSupport`) au lieu de rendre le
+prorata quand il est en dernier recours.
