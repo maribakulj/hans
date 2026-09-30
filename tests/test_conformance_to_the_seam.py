@@ -24,6 +24,7 @@ rewriter = pytest.importorskip(
     reason="saknussemm absent : installer l'extra [parity]",
 )
 schemas = pytest.importorskip("saknussemm.core.schemas")
+protocols = pytest.importorskip("saknussemm.core.protocols")
 
 TOKENS = ["de", " ", "la"]
 HPOS, WIDTH = 100, 80
@@ -42,10 +43,22 @@ def _manifest():
 
 
 def _through_the_seam(resolver):
-    """Le vrai chemin : gardes de saknussemm comprises."""
-    return rewriter._resolve_geometry(
-        resolver, _manifest(), HPOS, 10, WIDTH, 40, list(TOKENS), None
+    """Le vrai chemin : gardes de saknussemm comprises.
+
+    ``anchors=None`` : sans boîtes d'origine, l'étage ancré de saknussemm
+    (géométrie locale, 2026-09-29) est hors jeu et un refus retombe sur le
+    proportionnel, comme avant lui.
+    """
+    request = protocols.LineGeometryRequest(
+        hpos=HPOS,
+        width=WIDTH,
+        tokens=tuple(TOKENS),
+        line_id=_manifest().line_id,
+        vpos=10,
+        height=40,
+        image=None,
     )
+    return rewriter._resolve_geometry(resolver, request, None)
 
 
 def test_the_ctc_resolver_plugs_in_without_an_adapter() -> None:
