@@ -1229,3 +1229,23 @@ arbitrage de conception.
 **La boucle s'arrête : les trois objectifs du mandat sont mesurés et
 écrits.** H23 (demi-ligne, garde en option, mergée), H24 (test réel,
 deux corrections mergées, CTC en dernier recours), H25 (PAGE, en attente).
+
+### 2026-10-01 — H26 : la vérité terrain NewsEye relue à l'œil
+
+Le mainteneur a vu « j>as » dans la vérité terrain de 752234-003 et a
+demandé si c'en était une. Règle 4 : lire la donnée. 200 lignes tirées au
+hasard (25 par page), recadrées, lues en aveugle, comparées à la
+référence. **Deux provenances dans un même dossier** : les cinq pages
+Transkribus de 1937 sont une transcription humaine (0,2 % d'erreurs
+sûres, dix lignes sur 125) ; les trois pages à identifiant BnF sont un
+OCR (5,5 %, 41 lignes sur 75, `Tinderamté`, `J.88o`, `SOgTaLISTË`), créé
+en une passe en décembre 2018 sans créateur ni relecture. Rapport
+`docs/H26.md` ; données `~/corpus-reel/h26-vt-newseye/`.
+
+Conséquences écrites : note en tête de H17 et H24, et dans l'item VR-7 du
+plan de saknussemm. Les CER par page des trois pages BnF portent un
+plancher de 4 à 7 points ; H24 jugeait les boîtes, qui ne sont pas en
+cause, mais sa « correction parfaite » ne l'était pas. Pour le chantier B
+du plan du 2026-10-01 : le texte des trois pages BnF n'entre dans aucun
+jeu de test ; les 127 pages d'entraînement sont à auditer page par page
+avant usage.

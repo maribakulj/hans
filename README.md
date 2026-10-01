@@ -73,6 +73,7 @@ python -m hans.bench chemin/vers/page.xml
 | G2 | `CTCCutsResolver` | écrit et mesuré |
 | G3 | `alignment_confidence` | clos sans être fait (contrat : H1 réfutée) |
 | G4 | Bout en bout | clos sans être fait (contrat : H1 réfutée) |
+| H26 | La « vérité terrain » NewsEye relue à l'œil | **mesurée** — 200 lignes : les 5 pages Transkribus de 1937 sont une transcription humaine (0,2 % d'erreurs), les 3 pages BnF sont un OCR (5,5 %, 41 lignes fautives sur 75) ; leur texte sort de toute référence, voir [docs/H26.md](docs/H26.md) |
 | H25 | PAGE : garder les `Word`, découper le reste dans les polygones existants | **mesurée** — 98,8 % et 96,2 % de bout en bout là où le chemin lent supprimait tous les mots ; PR saknussemm en attente de validation (règle de spec), voir [docs/H25.md](docs/H25.md) |
 | H24 | Le test réel : Tesseract corrigé par la vérité terrain, boîtes d'un autre producteur | **mesurée** — chemin lent 50,8 → 89,5 % sans image, 91,7 % avec le CTC en dernier recours (un tiers des appels) ; 97,6–98,2 % sous 15 % d'erreurs OCR, voir [docs/H24.md](docs/H24.md) |
 | H23 | La demi-ligne inventée (VR-12) | **mesurée** — aucun signal textuel ne sépare l'invention de la fin de ligne retrouvée sur l'image ; un garde en option arrête les 25 fautives pour 18 justes sur 6 077 corrections, voir [docs/H23.md](docs/H23.md) |
