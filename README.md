@@ -67,7 +67,7 @@ python -m hans.bench chemin/vers/page.xml
 
 | | Jalon | État |
 |---|---|---|
-| G0 | La couture `WordGeometryResolver` dans saknussemm | fait (un fil reste, arbitrage mainteneur) |
+| G0 | La couture `WordGeometryResolver` dans saknussemm | fait ; le fil restant (le résolveur interrogé quand la page devine) est la PR saknussemm #172, `last_resort` |
 | G1 | **Le juge** — banc, corruption mécanique, ligne de base | fait |
 | H1 | CTC vs proportionnel, 3 corpus | **tranchée : RÉFUTÉE** — voir [docs/H1.md](docs/H1.md) |
 | G2 | `CTCCutsResolver` | écrit et mesuré |
@@ -78,7 +78,7 @@ python -m hans.bench chemin/vers/page.xml
 | H24 | Le test réel : Tesseract corrigé par la vérité terrain, boîtes d'un autre producteur | **mesurée** — chemin lent 50,8 → 89,5 % sans image, 91,7 % avec le CTC en dernier recours (un tiers des appels) ; 97,6–98,2 % sous 15 % d'erreurs OCR, voir [docs/H24.md](docs/H24.md) |
 | H23 | La demi-ligne inventée (VR-12) | **mesurée** — aucun signal textuel ne sépare l'invention de la fin de ligne retrouvée sur l'image ; un garde en option arrête les 25 fautives pour 18 justes sur 6 077 corrections, voir [docs/H23.md](docs/H23.md) |
 | H22 | Réparation locale sans pixels : garder les boîtes, n'ouvrir que la boîte touchée | **mesurée sur 25 corpus** — 97 à 99,8 % sur les ALTO de bibliothèque, implémentée dans saknussemm (PR #167), voir [docs/H22.md](docs/H22.md) |
-| H21 | Largeurs de glyphes apprises : dans les trous du CTC, et sans pixels depuis l'ALTO | **mesurée** — voir [docs/H21.md](docs/H21.md) : la variante CTC ne déplace rien ; la variante sans pixels divise la queue par 2 à 6 mais aggrave le pire cas sur deux corpus, arbitrage mainteneur |
+| H21 | Largeurs de glyphes apprises : dans les trous du CTC, et sans pixels depuis l'ALTO | **mesurée** — voir [docs/H21.md](docs/H21.md) : la variante CTC ne déplace rien ; la variante sans pixels divise la queue par 2 à 6 mais aggrave le pire cas sur deux corpus. **Supersédée par H22** (2026-10-01) : les largeurs apprises servent à placer les mots entre des boîtes gardées, pas à pondérer le prorata d'une ligne entière — le pire cas de H21 ne se pose plus |
 
 **En une phrase** : le CTC fait passer la part des frontières mal placées de
 ~16-21 % à moins de 1 % sur les trois corpus — mais il aggrave le pire cas
