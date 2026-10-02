@@ -1249,3 +1249,12 @@ cause, mais sa « correction parfaite » ne l'était pas. Pour le chantier B
 du plan du 2026-10-01 : le texte des trois pages BnF n'entre dans aucun
 jeu de test ; les 127 pages d'entraînement sont à auditer page par page
 avant usage.
+
+## 2026-10-02 — H27, porte de lidenbrock
+
+Rapport H27 : phases 0 à 3 (locales) du protocole « post-correction sans
+décodeur » (`~/lidenbrock`). Seuils figés avant S2 (D-35), écart consigné
+pour S0/S1/S5 (D-36). S2-léger tient H2 (0,98 %), H5 et H6 ; H1/H3
+attendent ByT5 sur Colab ; H4 non concluante. Décisions du mainteneur en
+attente : merges saknussemm #172–#175, clé Mistral, nom du dépôt, lancement
+du carnet Colab.

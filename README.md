@@ -73,6 +73,7 @@ python -m hans.bench chemin/vers/page.xml
 | G2 | `CTCCutsResolver` | écrit et mesuré |
 | G3 | `alignment_confidence` | clos sans être fait (contrat : H1 réfutée) |
 | G4 | Bout en bout | clos sans être fait (contrat : H1 réfutée) |
+| H27 | Post-correction sans décodeur (`~/lidenbrock`) : porte des phases 0 à 3 | **mesurée** — un étiqueteur d'éditions de 1,4 M de paramètres n'invente rien (0 suite ≥ 3 sur 6 066 lignes), dégrade 0,98 % des lignes propres (LLM nu 12,7 %, LLM sous gardes 5,3 %), réduit le CER modéré de 14 % ; H2, H5, H6 tenues, H1 et H3 attendent Colab, voir [docs/H27.md](docs/H27.md) |
 | H26 | La « vérité terrain » NewsEye relue à l'œil | **mesurée** — 200 lignes : les 5 pages Transkribus de 1937 sont une transcription humaine (0,2 % d'erreurs), les 3 pages BnF sont un OCR (5,5 %, 41 lignes fautives sur 75) ; leur texte sort de toute référence, voir [docs/H26.md](docs/H26.md) |
 | H25 | PAGE : garder les `Word`, découper le reste dans les polygones existants | **mesurée** — 98,8 % et 96,2 % de bout en bout là où le chemin lent supprimait tous les mots ; PR saknussemm en attente de validation (règle de spec), voir [docs/H25.md](docs/H25.md) |
 | H24 | Le test réel : Tesseract corrigé par la vérité terrain, boîtes d'un autre producteur | **mesurée** — chemin lent 50,8 → 89,5 % sans image, 91,7 % avec le CTC en dernier recours (un tiers des appels) ; 97,6–98,2 % sous 15 % d'erreurs OCR, voir [docs/H24.md](docs/H24.md) |
