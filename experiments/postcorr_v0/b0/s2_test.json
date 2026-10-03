@@ -1,0 +1,90 @@
+{
+ "propre": {
+  "lignes": 1583,
+  "groupes": 46,
+  "cer_avant": 0.00467,
+  "cer_apres": 0.0042,
+  "reduction_rel": 0.1009,
+  "ic95_reduction": [
+   0.0672,
+   0.1613
+  ],
+  "taux_degradation": 0.0013,
+  "ic95_degradation": [
+   0.0,
+   0.0042
+  ],
+  "wer_avant": 0.0316,
+  "wer_apres": 0.0284,
+  "editions_utiles": 58,
+  "editions_fausses": 2,
+  "erreurs_laissees": 497,
+  "derive_longueur_p95": 1
+ },
+ "modere": {
+  "lignes": 1410,
+  "groupes": 48,
+  "cer_avant": 0.05898,
+  "cer_apres": 0.05378,
+  "reduction_rel": 0.0883,
+  "ic95_reduction": [
+   0.0586,
+   0.1477
+  ],
+  "taux_degradation": 0.0014,
+  "ic95_degradation": [
+   0.0,
+   0.0034
+  ],
+  "wer_avant": 0.2596,
+  "wer_apres": 0.2342,
+  "editions_utiles": 558,
+  "editions_fausses": 2,
+  "erreurs_laissees": 5742,
+  "derive_longueur_p95": 4
+ },
+ "lourd": {
+  "lignes": 115,
+  "groupes": 20,
+  "cer_avant": 0.1923,
+  "cer_apres": 0.17893,
+  "reduction_rel": 0.0695,
+  "ic95_reduction": [
+   0.0336,
+   0.1282
+  ],
+  "taux_degradation": 0.0,
+  "ic95_degradation": [
+   0.0,
+   0.0
+  ],
+  "wer_avant": 0.6911,
+  "wer_apres": 0.6414,
+  "editions_utiles": 109,
+  "editions_fausses": 0,
+  "erreurs_laissees": 1459,
+  "derive_longueur_p95": 8
+ },
+ "tout": {
+  "lignes": 3108,
+  "groupes": 49,
+  "cer_avant": 0.03603,
+  "cer_apres": 0.03294,
+  "reduction_rel": 0.0856,
+  "ic95_reduction": [
+   0.0592,
+   0.1329
+  ],
+  "taux_degradation": 0.0013,
+  "ic95_degradation": [
+   0.0003,
+   0.0031
+  ],
+  "wer_avant": 0.1594,
+  "wer_apres": 0.1445,
+  "editions_utiles": 725,
+  "editions_fausses": 4,
+  "erreurs_laissees": 7698,
+  "derive_longueur_p95": 3
+ }
+}

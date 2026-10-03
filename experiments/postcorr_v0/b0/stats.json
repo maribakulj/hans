@@ -1,0 +1,32 @@
+{
+ "exclusions": {
+  "écartée (ratio/CER)": 4
+ },
+ "groupes": {
+  "train": 169,
+  "test": 49,
+  "dev": 23
+ },
+ "lignes": {
+  "train": {
+   "propre": 6571,
+   "modere": 5932,
+   "lourd": 442
+  },
+  "dev": {
+   "propre": 631,
+   "modere": 411,
+   "lourd": 22
+  },
+  "test": {
+   "propre": 1583,
+   "modere": 1410,
+   "lourd": 115
+  }
+ },
+ "cer_moyen_par_partition": {
+  "train": 0.0358,
+  "dev": 0.0272,
+  "test": 0.0364
+ }
+}
