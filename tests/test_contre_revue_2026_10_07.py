@@ -14,7 +14,7 @@ import pytest
 from hans.alto import ReferenceLine, read_page_lines
 from hans.corrupt import line_case, line_case_in_its_box
 from hans.cuts import ImpossibleRequest, LineCuts, transfer
-from hans.geometry import GeometryRequest, WordBox
+from hans.geometry import WordBox
 from hans.measure import Report
 from hans.reproject import reproject, reproject_lines
 from hans.resolvers import CTCCutsResolver, InkSnapResolver
@@ -44,9 +44,30 @@ def test_ninety_nine_failures_and_one_good_boundary_do_not_confirm() -> None:
         for i in range(3)
     ]
     v = decide(outcomes)
+    assert v.outcome is Outcome.REFUTED
+    assert "echecs candidat: 99" in v.report()
+
+
+def test_a_few_declined_lines_do_not_make_the_verdict_undeclarable() -> None:
+    """Un résolveur de dernier recours décline 1 à 4 lignes par corpus (H1) :
+    ce sont des frontières ratées, pas une interdiction de comparer."""
+    outcomes = [
+        CorpusOutcome(str(i), _report(0.80, 8090), _report(0.95, 8086, failures=4))
+        for i in range(3)
+    ]
+    assert decide(outcomes).outcome is Outcome.CONFIRMED
+
+
+def test_a_candidate_that_answered_nothing_cannot_take_part_in_a_verdict() -> None:
+    outcomes = [
+        CorpusOutcome(str(i), _report(0.80, 100), _report(0.95, 100)) for i in range(2)
+    ]
+    outcomes.append(
+        CorpusOutcome("muet", _report(0.80, 100), _report(0.0, 0, failures=100))
+    )
+    v = decide(outcomes)
     assert v.outcome is Outcome.INCOMPLETE
-    assert "incomparables" in v.reason
-    assert "99 echec" in v.reason
+    assert "aucune frontiere" in v.reason
 
 
 def test_an_empty_corpus_cannot_take_part_in_a_verdict() -> None:
@@ -220,17 +241,60 @@ def test_a_matching_provenance_loads(tmp_path: Path) -> None:
     assert len(CTCCutsResolver.from_cache(path, alto=alto)) == 1
 
 
-# 6. L'outil de décodage lit aussi les lignes à un seul mot
+# 6. L'outil de décodage : provenance réelle, et lignes à un seul mot
 
 
-def test_decode_lines_reads_single_word_lines() -> None:
+def test_cache_provenance_hashes_the_files_it_names(tmp_path: Path) -> None:
+    import hashlib
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "decode_lines_under_test",
+        Path(__file__).parent.parent / "tools" / "decode_lines.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    alto, image, model = tmp_path / "p.xml", tmp_path / "p.png", tmp_path / "m.mlmodel"
+    alto.write_bytes(b"<alto/>")
+    image.write_bytes(b"\x89PNG")
+    model.write_bytes(b"model")
+    prov = module.cache_provenance(
+        alto, image, model, scale=1.181, image_size=(640, 480)
+    )
+    assert prov["schema"] == 2
+    assert prov["alto"]["sha256"] == hashlib.sha256(b"<alto/>").hexdigest()
+    assert prov["image"] == {
+        "name": "p.png",
+        "sha256": hashlib.sha256(b"\x89PNG").hexdigest(),
+        "width": 640,
+        "height": 480,
+    }
+    assert prov["model"]["sha256"] == hashlib.sha256(b"model").hexdigest()
+    assert prov["scale"] == 1.181
+    # and what decode_lines writes is exactly what from_cache verifies
+    cache = tmp_path / "cuts.json"
+    cache.write_text(json.dumps({"alto": "p.xml", "provenance": prov, "lines": {}}))
+    CTCCutsResolver.from_cache(cache, alto=alto, image=image)
+
+
+def test_a_historical_cache_loads_with_a_warning_when_asked_to(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    alto = tmp_path / "page.xml"
+    alto.write_bytes(b"<alto/>")
+    resolver = CTCCutsResolver.from_cache(
+        _cache(tmp_path, None), alto=alto, require_provenance=False
+    )
+    assert len(resolver) == 1
+    assert "no provenance block" in capsys.readouterr().err
+
+
+def test_decode_lines_source_asks_the_reader_for_single_word_lines() -> None:
+    """Un grep, assumé : kraken n'est pas appelable ici. Il épingle le
+    paramètre, pas le décodage."""
     source = (Path(__file__).parent.parent / "tools" / "decode_lines.py").read_text()
     assert "reader(alto, min_words=1)" in source
-    assert "cache_provenance(" in source
-
-
-def test_a_geometry_request_can_carry_the_line_height() -> None:
-    assert GeometryRequest(0, 10, ("a",), vpos=5, height=7).height == 7
 
 
 # 10. --strict vérifie la parité, pas seulement l'import

@@ -1266,19 +1266,27 @@ dépôt : `~/Documents/reviews/post-correction-contre-revue-2026-10-07/`).
 Leurs dix constats sur hans, tous reproduits puis corrigés sur la branche
 `correctifs-revue-2026-10-08` (`tests/test_contre_revue_2026_10_07.py`) :
 
-1. le verdict confirmait H1 avec 99 exceptions sur 100 — `decide` refuse
-   désormais des populations incomparables ou un corpus vide (non déclarable) ;
+1. le verdict confirmait H1 avec 99 exceptions sur 100 — chaque cas où le
+   candidat a levé compte désormais comme une frontière au-delà de 0,5
+   caractère (une ligne refusée n'est pas une ligne réussie) ; un candidat
+   muet ou un corpus vide restent non déclarables. Première version du
+   correctif (égalité stricte des comptes) retirée en relecture : elle
+   rendait H1 non déclarable dès qu'un résolveur de dernier recours
+   déclinait une ligne ;
 2. `reproject_lines` gardait le compte des lignes, pas leur identité —
    `reproject()` nomme les lignes vidées, fusionnées, méconnaissables ;
+   disponible, pas encore branchée dans un outil (seuil 0,5 à calibrer) ;
 3. `InkSnapResolver` perdait `last_resort` — relayé ;
 4. les caches CTC n'identifiaient pas leur source — `decode_lines` écrit
    une provenance (empreintes ALTO/image/modèle, échelle, unités) et
-   `from_cache(alto=, image=)` la vérifie ; les caches historiques, sans
-   provenance, chargent encore mais ne peuvent pas être vérifiés ;
+   `from_cache(alto=, image=)` la vérifie ; `hans.campaign` passe l'ALTO
+   du fichier de campagne ; les caches historiques, sans provenance,
+   chargent avec un avertissement (`require_provenance=False`) ;
 5. `decode_lines` excluait les lignes à un seul mot — `min_words=1` ;
 6. `line_case` passait l'union des mots — `line_case_in_its_box` passe le
-   rectangle de la `TextLine`, hauteur comprise ; scénario distinct, non
-   substitué à l'ancien (les campagnes H1–H27 restent rejouables à l'identique) ;
+   rectangle de la `TextLine`, hauteur comprise ; scénario distinct
+   (`hans.bench --line-box`), non substitué à l'ancien (les campagnes
+   H1–H27 restent rejouables à l'identique, H1 rejouée le 8/10) ;
 7. `read_page_lines` prenait le dernier `TextEquiv` — index 0 ;
 8. `cuts._repair` dessinait hors du rectangle — `ImpossibleRequest`, compté
    comme échec ;

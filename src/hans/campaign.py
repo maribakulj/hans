@@ -53,7 +53,10 @@ def _groups(
         cases = line_cases(read_lines(alto))
         if not cases:
             continue
-        ctc = CTCCutsResolver.from_cache(cuts)
+        # The ALTO sits beside the cache in the campaign file: a cache that
+        # carries a provenance block is held to it; a historical one loads
+        # with a warning rather than silently (contre-revue du 7/10/2026).
+        ctc = CTCCutsResolver.from_cache(cuts, alto=alto, require_provenance=False)
         baseline.append((ProportionalResolver(), cases))
         candidate.append((ctc, cases))
         declined += 0  # counted after the run

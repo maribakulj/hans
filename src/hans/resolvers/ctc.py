@@ -74,13 +74,18 @@ class CTCCutsResolver:
         last_resort: bool = False,
         alto: Path | str | None = None,
         image: Path | str | None = None,
+        require_provenance: bool = True,
     ) -> CTCCutsResolver:
         """Load a cut cache written by ``tools/decode_lines.py``.
 
-        ``alto`` / ``image``: when given, the cache must carry a provenance
-        block (schema 2) whose digests match these files, or loading is
+        ``alto`` / ``image``: when given, the cache's provenance block
+        (schema 2) must carry digests matching these files, or loading is
         refused -- a cache keyed by line IDs alone can hand back plausible
-        positions from another page (contre-revue du 7/10/2026).
+        positions from another page (contre-revue du 7/10/2026). A cache
+        WITHOUT a provenance block (every cache decoded before 2026-10-08)
+        is refused too, unless ``require_provenance=False``: it then loads
+        with a warning on stderr, which is how the H1 campaign keeps
+        replaying its historical caches while naming what it cannot check.
 
         ``weighted_gaps`` is forwarded only when given: the first version
         passed ``False`` through by default, which silently overrode the
@@ -90,7 +95,9 @@ class CTCCutsResolver:
         out of 13 946, 2026-09-29). A test now pins the loaded variant.
         """
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
-        _verify_provenance(raw, path, alto=alto, image=image)
+        _verify_provenance(
+            raw, path, alto=alto, image=image, require_provenance=require_provenance
+        )
         cuts = {
             line_id: LineCuts(
                 line_id=line_id,
@@ -153,15 +160,22 @@ def _verify_provenance(
     *,
     alto: Path | str | None,
     image: Path | str | None,
+    require_provenance: bool = True,
 ) -> None:
     if alto is None and image is None:
         return
     provenance = raw.get("provenance")
     if not isinstance(provenance, dict):
-        raise CacheMismatch(
+        message = (
             f"{Path(cache).name}: no provenance block, cannot verify it was "
             "decoded from the files given (re-run tools/decode_lines.py)"
         )
+        if require_provenance:
+            raise CacheMismatch(message)
+        import sys
+
+        print(f"  ! {message}", file=sys.stderr)
+        return
     for label, given in (("alto", alto), ("image", image)):
         if given is None:
             continue
