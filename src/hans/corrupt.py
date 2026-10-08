@@ -55,6 +55,10 @@ class MergeCase:
     gaps: tuple[tuple[int, int], ...]
     box_hpos: int
     box_width: int
+    #: Vertical extent, carried only when the case is the LINE's own box
+    #: (:func:`line_case_in_its_box`); a glued window has none to carry.
+    box_vpos: int = 0
+    box_height: int = 0
 
     def request(self, *, image: object | None = None) -> GeometryRequest:
         return GeometryRequest(
@@ -62,6 +66,8 @@ class MergeCase:
             width=self.box_width,
             tokens=self.tokens,
             line_id=self.line_id,
+            vpos=self.box_vpos,
+            height=self.box_height,
             image=image,
         )
 
@@ -145,5 +151,44 @@ def line_case(line: ReferenceLine) -> MergeCase | None:
     return cases[0] if cases else None
 
 
-def line_cases(lines: list[ReferenceLine]) -> list[MergeCase]:
-    return [c for line in lines if (c := line_case(line)) is not None]
+def line_case_in_its_box(line: ReferenceLine) -> MergeCase | None:
+    """The whole line re-tokenised inside the TextLine's OWN rectangle.
+
+    :func:`line_case` hands the resolver the union of the word boxes, which
+    is pinned by two real edges; the production seam hands it the LINE's
+    box, margins included, and its vertical extent. A ``TextLine`` spanning
+    0..200 whose words span 20..130 is asked, in production, to lay the
+    words out over 200 units -- a wider space to be wrong in. Measured as
+    its own scenario so the two are never confused (contre-revue du
+    7/10/2026). Falls back to the union when the line box does not contain
+    its words, which producers do emit.
+    """
+    case = line_case(line)
+    if case is None:
+        return None
+    union_right = case.box_hpos + case.box_width
+    if (
+        line.width <= 0
+        or line.hpos > case.box_hpos
+        or line.hpos + line.width < union_right
+    ):
+        return case
+    return MergeCase(
+        line_id=case.line_id,
+        first_index=case.first_index,
+        source_content=case.source_content,
+        tokens=case.tokens,
+        true_boxes=case.true_boxes,
+        gaps=case.gaps,
+        box_hpos=line.hpos,
+        box_width=line.width,
+        box_vpos=line.vpos,
+        box_height=line.height,
+    )
+
+
+def line_cases(
+    lines: list[ReferenceLine], *, in_line_box: bool = False
+) -> list[MergeCase]:
+    make = line_case_in_its_box if in_line_box else line_case
+    return [c for line in lines if (c := make(line)) is not None]

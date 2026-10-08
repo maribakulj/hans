@@ -118,7 +118,10 @@ def main() -> int:
         argv[argv.index("--model") + 1] if "--model" in argv else _default_model()
     )
     reader = read_page_lines if alto.read_text(errors="replace")[:4000].find("PcGts") >= 0 else read_lines
-    lines = reader(alto)
+    # min_words=1: a line holding a single String (``dela``) is exactly one
+    # the seam may need cut into ``de la``. The bench's default of 2 is an
+    # admissibility rule for REFERENCE lines, not for decoding.
+    lines = reader(alto, min_words=1)
     print(f"{alto.name}: {len(lines)} lignes, echelle {scale:.3f}", flush=True)
 
     im = open_image(str(image))
@@ -185,11 +188,61 @@ def main() -> int:
         }
 
     out.write_text(
-        json.dumps({"alto": alto.name, "lines": payload}, ensure_ascii=False),
+        json.dumps(
+            {
+                "alto": alto.name,
+                "provenance": cache_provenance(
+                    alto, image, Path(model_path), scale=scale, image_size=(img_w, img_h)
+                ),
+                "lines": payload,
+            },
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
     print(f"-> {out} ({len(payload)}/{len(lines)} lignes)", flush=True)
     return 0
+
+
+def cache_provenance(
+    alto: Path,
+    image: Path,
+    model: Path,
+    *,
+    scale: float,
+    image_size: tuple[int, int],
+) -> dict[str, object]:
+    """What a cut cache was computed from, so a wrong cache cannot pass.
+
+    A cache used to carry the ALTO's name and results keyed by line ID. Two
+    pages with the same line IDs (``37-GT-BNL`` has 509 lines under 40 IDs)
+    could hand a resolver plausible positions from a different document, and
+    nothing checked (contre-revue du 7/10/2026). ``CTCCutsResolver.from_cache``
+    verifies these digests when given the files.
+    """
+    return {
+        "schema": 2,
+        "alto": {"name": alto.name, "sha256": _sha256(alto)},
+        "image": {
+            "name": image.name,
+            "sha256": _sha256(image),
+            "width": image_size[0],
+            "height": image_size[1],
+        },
+        "model": {"name": model.name, "sha256": _sha256(model)},
+        "scale": scale,
+        "units": "alto coordinates (image pixels / scale)",
+    }
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _default_model() -> str:

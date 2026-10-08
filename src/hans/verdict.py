@@ -63,6 +63,29 @@ class CorpusOutcome:
     candidate: Report
 
     @property
+    def comparable(self) -> str | None:
+        """Why the two reports cannot be compared, or ``None`` when they can.
+
+        The rule halves a SHARE. A share over a hundred boundaries and a
+        share over one are not the same quantity: a candidate that raised
+        on 99 cases out of 100 and placed its single surviving boundary
+        well used to CONFIRM (contre-revue du 7/10/2026). Failures are
+        counted by ``measure`` and then excluded from the distribution, so
+        the only honest reading is to refuse the comparison when the two
+        sides did not score the same boundaries, or scored none.
+        """
+        if self.baseline.boundaries == 0 or self.candidate.boundaries == 0:
+            return "corpus vide"
+        if self.candidate.boundaries != self.baseline.boundaries:
+            return (
+                f"populations incomparables : {self.candidate.boundaries} "
+                f"frontieres contre {self.baseline.boundaries} "
+                f"({self.candidate.failures} echec(s) du candidat, "
+                f"{self.baseline.failures} de la reference)"
+            )
+        return None
+
+    @property
     def halved(self) -> bool:
         """Did the candidate halve the share of boundaries beyond 0.5 char?"""
         target = _beyond_half(self.baseline) / 2
@@ -110,6 +133,15 @@ def decide(outcomes: list[CorpusOutcome]) -> Verdict:
             Outcome.INCOMPLETE,
             f"{len(corpora)} corpus mesure(s), {REQUIRED_CORPORA} exiges par "
             "le critere gele. H1 ne peut pas etre declaree.",
+            corpora,
+        )
+
+    incomparable = [(c.corpus, c.comparable) for c in corpora if c.comparable]
+    if incomparable:
+        return Verdict(
+            Outcome.INCOMPLETE,
+            "; ".join(f"{corpus} : {why}" for corpus, why in incomparable)
+            + ". H1 ne peut pas etre declaree.",
             corpora,
         )
 

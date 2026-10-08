@@ -220,6 +220,10 @@ def _fill_gaps(
     return filled
 
 
+class ImpossibleRequest(ValueError):
+    """The box is narrower than its tokens: no admissible answer exists."""
+
+
 def transfer(
     read: LineCuts,
     tokens: tuple[str, ...],
@@ -285,6 +289,15 @@ def _repair(
     between measuring the method and measuring its worst line.
     """
     n = len(tokens)
+    if width < n:
+        # Every token needs at least one pixel. Clamping below would draw
+        # boxes past the right edge -- an answer outside the box asked for,
+        # which saknussemm's guard rejects anyway. Declining out loud lets
+        # the bench count a refusal instead of scoring a geometry nobody
+        # would write (contre-revue du 7/10/2026).
+        raise ImpossibleRequest(
+            f"{n} tokens cannot fit in {width}px: at least one pixel each"
+        )
     right_edge = hpos + width
     # every token needs at least 1px, so nothing may start past this
     boxes: list[WordBox] = []

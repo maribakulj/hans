@@ -72,8 +72,15 @@ class CTCCutsResolver:
         fallback: object | None = None,
         weighted_gaps: bool | None = None,
         last_resort: bool = False,
+        alto: Path | str | None = None,
+        image: Path | str | None = None,
     ) -> CTCCutsResolver:
         """Load a cut cache written by ``tools/decode_lines.py``.
+
+        ``alto`` / ``image``: when given, the cache must carry a provenance
+        block (schema 2) whose digests match these files, or loading is
+        refused -- a cache keyed by line IDs alone can hand back plausible
+        positions from another page (contre-revue du 7/10/2026).
 
         ``weighted_gaps`` is forwarded only when given: the first version
         passed ``False`` through by default, which silently overrode the
@@ -83,6 +90,7 @@ class CTCCutsResolver:
         out of 13 946, 2026-09-29). A test now pins the loaded variant.
         """
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
+        _verify_provenance(raw, path, alto=alto, image=image)
         cuts = {
             line_id: LineCuts(
                 line_id=line_id,
@@ -123,6 +131,48 @@ class CTCCutsResolver:
             request.width,
             char_widths=self._char_widths,
         )
+
+
+class CacheMismatch(ValueError):
+    """The cut cache was not computed from the files it is being used with."""
+
+
+def _sha256(path: Path | str) -> str:
+    import hashlib
+
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _verify_provenance(
+    raw: dict[str, object],
+    cache: Path | str,
+    *,
+    alto: Path | str | None,
+    image: Path | str | None,
+) -> None:
+    if alto is None and image is None:
+        return
+    provenance = raw.get("provenance")
+    if not isinstance(provenance, dict):
+        raise CacheMismatch(
+            f"{Path(cache).name}: no provenance block, cannot verify it was "
+            "decoded from the files given (re-run tools/decode_lines.py)"
+        )
+    for label, given in (("alto", alto), ("image", image)):
+        if given is None:
+            continue
+        entry = provenance.get(label)
+        recorded = entry.get("sha256") if isinstance(entry, dict) else None
+        actual = _sha256(given)
+        if recorded != actual:
+            raise CacheMismatch(
+                f"{Path(cache).name}: {label} digest {str(recorded)[:12]} does "
+                f"not match {Path(given).name} ({actual[:12]})"
+            )
 
 
 class WeightedCTCCutsResolver(CTCCutsResolver):
