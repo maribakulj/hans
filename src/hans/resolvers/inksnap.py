@@ -40,6 +40,17 @@ class InkSnapResolver:
         self.name = name or f"{getattr(inner, 'name', 'resolver')} + encre"
         self.snapped = 0
 
+    @property
+    def last_resort(self) -> bool:
+        """Le réglage « dernier recours » du résolveur enveloppé, relayé.
+
+        La couture de saknussemm lit cet attribut sur le résolveur qu'on lui
+        donne. Sans ce relais, envelopper un CTC déclaré en dernier recours
+        en faisait un résolveur prioritaire : il remplaçait une géométrie
+        ancrée que la page savait dessiner seule (contre-revue du 7/10/2026).
+        """
+        return bool(getattr(self._inner, "last_resort", False))
+
     @classmethod
     def from_cache(cls, inner: object, path: Path | str, **kw: str) -> InkSnapResolver:
         raw = json.loads(Path(path).read_text(encoding="utf-8"))

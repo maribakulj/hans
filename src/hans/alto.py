@@ -149,6 +149,32 @@ def read_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLine]:
     return lines
 
 
+def _canonical_text_equiv(word: etree._Element) -> str | None:
+    """La transcription de référence d'un ``Word`` PAGE, choisie explicitement.
+
+    PAGE autorise plusieurs ``TextEquiv`` par mot ; ``index`` ordonne les
+    alternatives et ``0`` est la transcription retenue. Le lecteur prenait
+    le DERNIER rencontré, donc l'ordre du XML décidait : ``index="1"``
+    placé après ``index="0"`` gagnait (contre-revue du 7/10/2026). Ici :
+    le plus petit ``index`` numérique, sinon le premier sans index.
+    """
+    ranked: list[tuple[int, int, str]] = []
+    for position, te in enumerate(word):
+        if not isinstance(te.tag, str) or _local(te) != "TextEquiv":
+            continue
+        try:
+            index = int(te.get("index", ""))
+        except ValueError:
+            index = 10**9
+        for u in te:
+            if isinstance(u.tag, str) and _local(u) == "Unicode" and u.text:
+                ranked.append((index, position, u.text))
+                break
+    if not ranked:
+        return None
+    return min(ranked)[2]
+
+
 def read_page_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLine]:
     """Les lignes d'un PAGE XML, avec la géométrie de ses ``Word``.
 
@@ -187,12 +213,7 @@ def read_page_lines(path: Path | str, *, min_words: int = 2) -> list[ReferenceLi
             if not isinstance(child.tag, str) or _local(child) != "Word":
                 continue
             box = extent(child)
-            text = None
-            for te in child:
-                if isinstance(te.tag, str) and _local(te) == "TextEquiv":
-                    for u in te:
-                        if isinstance(u.tag, str) and _local(u) == "Unicode":
-                            text = u.text
+            text = _canonical_text_equiv(child)
             if box is None or not text or box[2] <= box[0]:
                 broken = True
                 break

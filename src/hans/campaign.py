@@ -53,7 +53,10 @@ def _groups(
         cases = line_cases(read_lines(alto))
         if not cases:
             continue
-        ctc = CTCCutsResolver.from_cache(cuts)
+        # The ALTO sits beside the cache in the campaign file: a cache that
+        # carries a provenance block is held to it; a historical one loads
+        # with a warning rather than silently (contre-revue du 7/10/2026).
+        ctc = CTCCutsResolver.from_cache(cuts, alto=alto, require_provenance=False)
         baseline.append((ProportionalResolver(), cases))
         candidate.append((ctc, cases))
         declined += 0  # counted after the run
@@ -79,14 +82,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.strict:
+        from hans.parity import ParityBroken, require_parity
+
         try:
-            import saknussemm.formats.alto.rewriter  # noqa: F401
-        except ImportError:
-            print(
-                "refus de mesurer : saknussemm absent, donc "
-                "test_baseline_is_saknussemms.py a SAUTE ici et la ligne de "
-                "base n'est pas epinglee. Installer l'extra [parity]."
-            )
+            print(require_parity().line())
+        except ParityBroken as exc:
+            print(f"refus de mesurer : {exc}")
             return 2
 
     spec = json.loads(args.config.read_text(encoding="utf-8"))

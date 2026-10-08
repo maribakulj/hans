@@ -1,5 +1,15 @@
 # Le système proposé — chaque pièce mesurée
 
+> **État au 2026-10-08.** Ce schéma est celui du 2026-09-22 ; il est
+> conservé comme journal, pas comme description de la couture livrée. Depuis
+> (saknussemm PR #167 et #171, H22, H24) : la réparation locale des boîtes
+> **sans image** (ancrage sur les boîtes gardées, largeurs apprises) est dans
+> saknussemm et répond sur 95 à 99 % des lignes ; le résolveur CTC n'est
+> interrogé qu'en **dernier recours** (`last_resort=True`), et la
+> reprojection au caractère ne garantit que le compte des lignes
+> (`reproject()` nomme ce qu'elle n'a pas tenu). Le raccord d'un résolveur
+> hans au pipeline public de saknussemm reste à exposer.
+
 Demande du mainteneur : *« trouve-moi un système pour gagner en correction
 tout en ayant à la fin la bonne structure et les bonnes boîtes. »*
 

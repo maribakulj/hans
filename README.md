@@ -73,6 +73,7 @@ python -m hans.bench chemin/vers/page.xml
 | G2 | `CTCCutsResolver` | écrit et mesuré |
 | G3 | `alignment_confidence` | clos sans être fait (contrat : H1 réfutée) |
 | G4 | Bout en bout | clos sans être fait (contrat : H1 réfutée) |
+| — | Contre-revue externe du 7/10/2026 : dix défauts du banc | **corrigés** le 8/10 — verdict non déclarable sur populations incomparables, reprojection avec signaux, provenance des caches CTC, `--strict` rejoue la parité, voir `AUTOPILOT.md` |
 | H27 | Post-correction sans décodeur (`~/axel`) : porte des phases 0 à 3 | **mesurée** — un étiqueteur d'éditions de 1,4 M de paramètres n'invente rien (0 suite ≥ 3 sur 6 066 lignes), dégrade 0,98 % des lignes propres (LLM nu 12,7 %, LLM sous gardes 5,3 %), réduit le CER modéré de 14 % ; H2, H5, H6 tenues, H1 et H3 attendent Colab, voir [docs/H27.md](docs/H27.md) |
 | H26 | La « vérité terrain » NewsEye relue à l'œil | **mesurée** — 200 lignes : les 5 pages Transkribus de 1937 sont une transcription humaine (0,2 % d'erreurs), les 3 pages BnF sont un OCR (5,5 %, 41 lignes fautives sur 75) ; leur texte sort de toute référence, voir [docs/H26.md](docs/H26.md) |
 | H25 | PAGE : garder les `Word`, découper le reste dans les polygones existants | **mesurée** — 98,8 % et 96,2 % de bout en bout là où le chemin lent supprimait tous les mots ; PR saknussemm en attente de validation (règle de spec), voir [docs/H25.md](docs/H25.md) |

@@ -25,18 +25,7 @@ saknussemm_rewriter = pytest.importorskip(
     reason="saknussemm absent: install the [parity] extra to pin the copy",
 )
 
-CASES: list[tuple[int, int, list[str]]] = [
-    (100, 300, ["de", " ", "la", " ", "Republique"]),
-    (0, 100, ["hello"]),
-    (50, 500, ["a", " ", "bb", " ", "ccc", " ", "dddd"]),
-    (0, 3, ["a", " ", "b", " ", "c", " ", "d"]),  # min-1 floor territory
-    (7, 1, ["x", " ", "y"]),  # width smaller than the token count
-    (0, 1000, [" ", "mot", " "]),
-    (12, 240, ["l'", "Etat", " ", "c'est", " ", "moi"]),
-    (0, 0, ["a", " ", "b"]),
-    (5, 77, []),
-    (0, 50, [" ", " ", "x"]),  # no-break space is NOT a separator
-]
+from hans.parity import CASES
 
 
 @pytest.mark.parametrize("hpos,width,tokens", CASES)

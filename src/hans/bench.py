@@ -47,17 +47,24 @@ def main(argv: list[str] | None = None) -> int:
             "which is what the rewriter's slow path really redistributes"
         ),
     )
+    parser.add_argument(
+        "--line-box",
+        action="store_true",
+        help=(
+            "whole-line cases take the TextLine's own rectangle (margins and "
+            "height included), as the production seam hands it -- not the "
+            "union of the word boxes; only with --run 0"
+        ),
+    )
     args = parser.parse_args(argv)
 
     if args.strict:
+        from hans.parity import ParityBroken, require_parity
+
         try:
-            import saknussemm.formats.alto.rewriter  # noqa: F401
-        except ImportError:
-            print(
-                "refusing to measure: saknussemm is not importable, so "
-                "test_baseline_is_saknussemms.py SKIPPED here and the "
-                "baseline is unpinned. Install the [parity] extra.",
-            )
+            print(require_parity().line())
+        except ParityBroken as exc:
+            print(f"refus de mesurer : {exc}")
             return 2
 
     lines = []
@@ -67,8 +74,8 @@ def main(argv: list[str] | None = None) -> int:
         lines.extend(found)
 
     if args.run == 0:
-        cases = line_cases(lines)
-        window = "whole line"
+        cases = line_cases(lines, in_line_box=args.line_box)
+        window = "whole line, TextLine box" if args.line_box else "whole line"
     else:
         cases = cases_from_lines(lines, run=args.run)
         window = f"run={args.run}"

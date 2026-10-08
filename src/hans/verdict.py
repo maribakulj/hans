@@ -51,7 +51,21 @@ class Outcome(Enum):
 
 
 def _beyond_half(report: Report) -> float:
-    return 1.0 - report.within_half_char
+    """Share of boundaries beyond 0.5 char -- a refusal counts as one of them.
+
+    ``measure`` counts a resolver that raised as a failure and keeps it out
+    of the distribution, so a candidate could raise on 99 cases out of 100,
+    place its one surviving boundary well, and CONFIRM (contre-revue du
+    7/10/2026). Each failed case is scored here as at least one boundary
+    beyond the bar: a line the resolver would not answer is not a line it
+    got right. One miss per failed case understates a multi-boundary case,
+    which errs against the candidate, never for it. A last-resort resolver
+    that declines a handful of lines out of thousands (H1: 1 to 4 per
+    corpus) loses a few hundredths of a point, not its verdict.
+    """
+    missed = (1.0 - report.within_half_char) * report.boundaries + report.failures
+    scored = report.boundaries + report.failures
+    return missed / scored if scored else 1.0
 
 
 @dataclass(frozen=True)
@@ -61,6 +75,25 @@ class CorpusOutcome:
     corpus: str
     baseline: Report
     candidate: Report
+
+    @property
+    def comparable(self) -> str | None:
+        """Why the two reports cannot be compared, or ``None`` when they can.
+
+        A share over nothing is not a share: a corpus on which either side
+        scored no boundary cannot take part. Failures do not make two
+        reports incomparable -- ``_beyond_half`` scores them against the
+        side that failed -- but a candidate that answered NOTHING has no
+        distribution to halve, and saying so beats a verdict over zero.
+        """
+        if self.baseline.boundaries == 0:
+            return "corpus vide pour la reference"
+        if self.candidate.boundaries == 0:
+            return (
+                f"le candidat n'a repondu a aucune frontiere "
+                f"({self.candidate.failures} echec(s) sur {self.candidate.cases} cas)"
+            )
+        return None
 
     @property
     def halved(self) -> bool:
@@ -87,6 +120,11 @@ class CorpusOutcome:
             f"{'OK ' if self.halved else 'NON'}   "
             f"pire: {self.baseline.worst:.1f} -> {self.candidate.worst:.1f}  "
             f"{'OK' if self.worst_not_worse else 'AGGRAVE'}"
+            + (
+                f"  echecs candidat: {self.candidate.failures}"
+                if self.candidate.failures
+                else ""
+            )
         )
 
 
@@ -110,6 +148,15 @@ def decide(outcomes: list[CorpusOutcome]) -> Verdict:
             Outcome.INCOMPLETE,
             f"{len(corpora)} corpus mesure(s), {REQUIRED_CORPORA} exiges par "
             "le critere gele. H1 ne peut pas etre declaree.",
+            corpora,
+        )
+
+    incomparable = [(c.corpus, c.comparable) for c in corpora if c.comparable]
+    if incomparable:
+        return Verdict(
+            Outcome.INCOMPLETE,
+            "; ".join(f"{corpus} : {why}" for corpus, why in incomparable)
+            + ". H1 ne peut pas etre declaree.",
             corpora,
         )
 

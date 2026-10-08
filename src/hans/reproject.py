@@ -22,7 +22,66 @@ Le choix du Jaccard n'était pas fautif — il a été validé sur une copie
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from difflib import SequenceMatcher
+
+#: En dessous, la ligne rendue ne ressemble plus à sa source : le flux a
+#: probablement été réordonné ou le texte remplacé, et la découpe ne
+#: transporte plus rien de fiable. Heuristique, pas une mesure calibrée.
+MIN_LINE_SIMILARITY = 0.5
+
+
+@dataclass(frozen=True)
+class Reprojection:
+    """Le résultat d'une reprojection, avec ce qu'elle n'a pas su garantir.
+
+    ``reproject_lines`` conserve le NOMBRE de lignes ; il ne conserve ni leur
+    identité ni leur contenu. Contre-exemples exécutés (contre-revue du
+    7/10/2026) : ``["abc", "def"]`` rendu ``["abc", "de", "f"]`` donne
+    ``["abc", "de\nf"]`` ; deux lignes permutées donnent ``["", "l1\nl2"]``.
+    L'API ne renvoyait aucun signal. Ici chaque anomalie est nommée par
+    l'indice de la ligne source qu'elle touche, et ``ok`` dit si la sortie
+    peut être prise comme « une ligne physique par ligne ».
+    """
+
+    lines: tuple[str, ...]
+    #: lignes source non vides dont la sortie est vide
+    emptied: tuple[int, ...]
+    #: lignes dont la sortie contient encore un retour à la ligne
+    merged: tuple[int, ...]
+    #: lignes dont la sortie ressemble trop peu à la source
+    dissimilar: tuple[int, ...]
+
+    @property
+    def ok(self) -> bool:
+        return not (self.emptied or self.merged or self.dissimilar)
+
+    @property
+    def suspect(self) -> tuple[int, ...]:
+        return tuple(
+            sorted(set(self.emptied) | set(self.merged) | set(self.dissimilar))
+        )
+
+
+def reproject(source: list[str], returned: list[str]) -> Reprojection:
+    """Comme :func:`reproject_lines`, en disant ce qui n'a pas tenu."""
+    lines = reproject_lines(source, returned)
+    emptied: list[int] = []
+    merged: list[int] = []
+    dissimilar: list[int] = []
+    for i, (src, out) in enumerate(zip(source, lines)):
+        if src.strip() and not out.strip():
+            emptied.append(i)
+            continue
+        if "\n" in out:
+            merged.append(i)
+        if (
+            src.strip()
+            and SequenceMatcher(None, src, out, autojunk=False).ratio()
+            < MIN_LINE_SIMILARITY
+        ):
+            dissimilar.append(i)
+    return Reprojection(tuple(lines), tuple(emptied), tuple(merged), tuple(dissimilar))
 
 
 def reproject_lines(source: list[str], returned: list[str]) -> list[str]:
@@ -32,7 +91,9 @@ def reproject_lines(source: list[str], returned: list[str]) -> list[str]:
     frontières de lignes d'origine sont transportées par l'alignement, et le
     flux rendu est recoupé dessus. Le nombre de lignes rendu par le modèle
     n'a donc plus d'importance — ce qui compte est que le flux reste
-    monotone, et un modèle qui réordonne serait visible à l'alignement.
+    monotone. Un modèle qui réordonne N'EST PAS visible ici : cette fonction
+    garantit le compte, pas l'identité des lignes. :func:`reproject` renvoie
+    la même découpe avec les lignes vidées, fusionnées ou méconnaissables.
     """
     if not source:
         return []
