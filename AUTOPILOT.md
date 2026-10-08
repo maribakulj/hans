@@ -1258,3 +1258,36 @@ pour S0/S1/S5 (D-36). S2-léger tient H2 (0,98 %), H5 et H6 ; H1/H3
 attendent ByT5 sur Colab ; H4 non concluante. Décisions du mainteneur en
 attente : merges saknussemm #172–#175, clé Mistral, nom du dépôt, lancement
 du carnet Colab.
+
+## 2026-10-08 — contre-revue du 7/10 : dix défauts du banc corrigés
+
+Deux agents Codex ont relu hans et saknussemm le 7 octobre (bilan hors
+dépôt : `~/Documents/reviews/post-correction-contre-revue-2026-10-07/`).
+Leurs dix constats sur hans, tous reproduits puis corrigés sur la branche
+`correctifs-revue-2026-10-08` (`tests/test_contre_revue_2026_10_07.py`) :
+
+1. le verdict confirmait H1 avec 99 exceptions sur 100 — `decide` refuse
+   désormais des populations incomparables ou un corpus vide (non déclarable) ;
+2. `reproject_lines` gardait le compte des lignes, pas leur identité —
+   `reproject()` nomme les lignes vidées, fusionnées, méconnaissables ;
+3. `InkSnapResolver` perdait `last_resort` — relayé ;
+4. les caches CTC n'identifiaient pas leur source — `decode_lines` écrit
+   une provenance (empreintes ALTO/image/modèle, échelle, unités) et
+   `from_cache(alto=, image=)` la vérifie ; les caches historiques, sans
+   provenance, chargent encore mais ne peuvent pas être vérifiés ;
+5. `decode_lines` excluait les lignes à un seul mot — `min_words=1` ;
+6. `line_case` passait l'union des mots — `line_case_in_its_box` passe le
+   rectangle de la `TextLine`, hauteur comprise ; scénario distinct, non
+   substitué à l'ancien (les campagnes H1–H27 restent rejouables à l'identique) ;
+7. `read_page_lines` prenait le dernier `TextEquiv` — index 0 ;
+8. `cuts._repair` dessinait hors du rectangle — `ImpossibleRequest`, compté
+   comme échec ;
+9. `--strict` ne vérifiait que l'import — il rejoue la batterie de parité
+   et nomme la version de saknussemm ;
+10. le raccord `word_geometry` n'est pas exposé par le pipeline public de
+    saknussemm — chantier côté saknussemm, pas ici.
+
+Règle 4 rappelée par la relecture : « juge incorruptible » (README) dit
+trop. Le banc prouve qu'un résolveur retrouve la segmentation du
+producteur, pas que cette segmentation est juste sur l'image ; une
+frontière juste n'est pas une boîte juste.

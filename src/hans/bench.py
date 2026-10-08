@@ -50,14 +50,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.strict:
+        from hans.parity import ParityBroken, require_parity
+
         try:
-            import saknussemm.formats.alto.rewriter  # noqa: F401
-        except ImportError:
-            print(
-                "refusing to measure: saknussemm is not importable, so "
-                "test_baseline_is_saknussemms.py SKIPPED here and the "
-                "baseline is unpinned. Install the [parity] extra.",
-            )
+            print(require_parity().line())
+        except ParityBroken as exc:
+            print(f"refus de mesurer : {exc}")
             return 2
 
     lines = []

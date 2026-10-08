@@ -231,3 +231,39 @@ def test_decode_lines_reads_single_word_lines() -> None:
 
 def test_a_geometry_request_can_carry_the_line_height() -> None:
     assert GeometryRequest(0, 10, ("a",), vpos=5, height=7).height == 7
+
+
+# 10. --strict vérifie la parité, pas seulement l'import
+
+
+def test_strict_runs_the_parity_battery_and_names_the_version() -> None:
+    pytest.importorskip("saknussemm.formats.alto.rewriter")
+    from hans.parity import require_parity
+
+    parity = require_parity()
+    assert parity.cases > 0
+    assert parity.saknussemm_version
+
+
+def test_strict_refuses_a_drifted_copy(monkeypatch: pytest.MonkeyPatch) -> None:
+    pytest.importorskip("saknussemm.formats.alto.rewriter")
+    from hans.parity import ParityBroken, require_parity
+    from hans.resolvers import proportional
+
+    monkeypatch.setattr(proportional, "compute_geometry", lambda *a: ())
+    with pytest.raises(ParityBroken, match="derive"):
+        require_parity()
+
+
+def test_bench_strict_reports_parity(
+    capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    pytest.importorskip("saknussemm.formats.alto.rewriter")
+    from hans.bench import main
+
+    alto = tmp_path / "empty.xml"
+    alto.write_text(
+        '<alto xmlns="http://www.loc.gov/standards/alto/ns-v3#"/>', encoding="utf-8"
+    )
+    main([str(alto), "--strict"])
+    assert "parite tenue avec saknussemm" in capsys.readouterr().out

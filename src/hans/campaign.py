@@ -79,14 +79,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.strict:
+        from hans.parity import ParityBroken, require_parity
+
         try:
-            import saknussemm.formats.alto.rewriter  # noqa: F401
-        except ImportError:
-            print(
-                "refus de mesurer : saknussemm absent, donc "
-                "test_baseline_is_saknussemms.py a SAUTE ici et la ligne de "
-                "base n'est pas epinglee. Installer l'extra [parity]."
-            )
+            print(require_parity().line())
+        except ParityBroken as exc:
+            print(f"refus de mesurer : {exc}")
             return 2
 
     spec = json.loads(args.config.read_text(encoding="utf-8"))
